@@ -163,9 +163,15 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'directory'
 LOGOUT_REDIRECT_URL = 'login'
 
-# Production security hardening — only enforced once DEBUG is off, so local
-# development (plain HTTP on 127.0.0.1) keeps working unchanged.
-if not DEBUG:
+# HTTPS-only hardening — keyed off whether SITE_URL is actually https://, not
+# off DEBUG. A production site with no SSL certificate yet (plain http://)
+# must NOT get Secure-only cookies or an SSL redirect: browsers refuse to
+# send a Secure cookie back over plain HTTP, which breaks every POST
+# (including login) with "CSRF cookie not set". Once the domain has a real
+# certificate, switch SITE_URL to https:// and these turn on automatically.
+SITE_IS_HTTPS = SITE_URL.startswith("https://")
+
+if SITE_IS_HTTPS:
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
