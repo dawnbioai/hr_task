@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payroll — DOB Team Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-mount"></div>
+  <main class="main">
+    <div id="topbar-mount"></div>
+    <div class="pages">
+      <section class="page active">
+        <div class="page-toolbar">
+          <select id="payroll-month"></select>
+          <span class="toolbar-count" id="payroll-count"></span>
+          <button class="btn-secondary" id="payroll-export">Export CSV</button>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Employee</th><th>bKash Number</th><th>Salary</th><th>Paid</th></tr></thead>
+          <tbody id="payroll-body"></tbody>
+        </table>
+        <p class="demo-note" id="payroll-note"></p>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>window.ROOT="../"; window.PAGE_ID="payroll"; window.PAGE_TITLE="Payroll"; window.PAGE_SUBTITLE="Salary status per employee, per month";</script>
+<script src="../assets/db.js"></script>
+<script src="../assets/auth.js"></script>
+<script src="../assets/nav.js"></script>
+<script src="page.js"></script>
+</body>
+</html>

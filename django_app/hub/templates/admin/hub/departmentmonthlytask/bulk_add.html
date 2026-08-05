@@ -1,0 +1,49 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a> &rsaquo;
+  <a href="{% url 'admin:hub_departmentmonthlytask_changelist' %}">Department monthly tasks</a> &rsaquo;
+  Bulk add
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <form method="post">
+    {% csrf_token %}
+    <div class="module aligned">
+      <div class="form-row">
+        <div>
+          <label for="id_department">Department:</label>
+          <select name="department" id="id_department" required>
+            <option value="">---------</option>
+            {% for d in departments %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="id_month">Month:</label>
+          <input type="month" name="month" id="id_month" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="id_tasks">Tasks (one per line):</label>
+          <textarea name="tasks" id="id_tasks" rows="10" cols="90"
+                    placeholder="Process monthly payroll &amp; bKash disbursement | 5&#10;Update employee attendance &amp; leave log | 3&#10;Track contract renewals due this month | 10"></textarea>
+          <p class="help">
+            Format each line as <code>Task description | day-of-month</code> (e.g. <code>Submit report | 28</code>).
+            The day is when it's due that month. If you leave off the "| day" part, the last day of the month is used.
+            Re-running this for the same department/month/task text updates the existing row instead of duplicating it.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="submit-row">
+      <input type="submit" value="Add tasks" class="default">
+    </div>
+  </form>
+</div>
+{% endblock %}

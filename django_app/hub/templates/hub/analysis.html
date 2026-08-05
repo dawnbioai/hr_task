@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load hub_extras %}
+{% block page_title %}Analysis — DOB Team Hub{% endblock %}
+{% block page_heading %}Analysis{% endblock %}
+{% block page_subtitle %}Task completion performance per employee{% endblock %}
+
+{% block content %}
+<div class="grid gap-3.5 mb-6" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+    <div class="bg-white border border-[#E7ECF1] border-t-[3px] border-t-[#00C4B4] rounded-xl shadow-sm px-4.5 py-4">
+        <div class="text-2xl font-bold leading-none">{{ stats.completed_total }}</div>
+        <div class="text-xs text-[#5B6B82] mt-1.5">Tasks completed ({{ stats.period_label }})</div>
+    </div>
+    <div class="bg-white border border-[#E7ECF1] border-t-[3px] border-t-[#00C4B4] rounded-xl shadow-sm px-4.5 py-4">
+        <div class="text-2xl font-bold leading-none">{{ stats.regular_count }}/{{ stats.employee_count }}</div>
+        <div class="text-xs text-[#5B6B82] mt-1.5">Regular employees</div>
+    </div>
+    <div class="bg-white border border-[#E7ECF1] border-t-[3px] border-t-[#E8615C] rounded-xl shadow-sm px-4.5 py-4">
+        <div class="text-2xl font-bold leading-none">{{ stats.irregular_count }}</div>
+        <div class="text-xs text-[#5B6B82] mt-1.5">Flagged irregular</div>
+    </div>
+    <div class="bg-white border border-[#E7ECF1] border-t-[3px] border-t-[#F0A93A] rounded-xl shadow-sm px-4.5 py-4">
+        <div class="text-2xl font-bold leading-none">{{ stats.overdue_total }}</div>
+        <div class="text-xs text-[#5B6B82] mt-1.5">Tasks overdue right now</div>
+    </div>
+</div>
+
+<form method="get" class="flex items-center gap-3 mb-6 flex-wrap">
+    <select name="division" onchange="this.form.submit()" class="text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
+        <option value="all" {% if selected_division == "all" %}selected{% endif %}>All divisions</option>
+        {% for d in divisions %}
+        <option value="{{ d.id }}" {% if selected_division == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+        {% endfor %}
+    </select>
+    <select name="month" onchange="this.form.submit()" class="text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
+        <option value="all" {% if selected_month == "all" %}selected{% endif %}>All months</option>
+        {% for m in months %}
+        <option value="{{ m }}" {% if selected_month == m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+    </select>
+    <span class="text-[12.5px] text-[#5B6B82] ml-auto">{{ stats.employee_count }} employee{{ stats.employee_count|pluralize }}</span>
+</form>
+
+<div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm overflow-hidden">
+    <table class="w-full text-[13px]">
+        <thead>
+            <tr class="text-left text-[11px] uppercase tracking-wide text-[#93A0B4] border-b border-[#E7ECF1] bg-[#FBFCFD]">
+                <th class="px-5 py-3">Employee</th><th class="px-5 py-3">Completed</th><th class="px-5 py-3">On time</th>
+                <th class="px-5 py-3">Late</th><th class="px-5 py-3">Overdue now</th><th class="px-5 py-3 min-w-[140px]">On-time rate</th><th class="px-5 py-3">Flag</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for row in rows %}
+            <tr class="border-b border-[#F0F3F6] last:border-0 hover:bg-[#FAFCFD]">
+                <td class="px-5 py-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-7 h-7 rounded-full flex items-center justify-center font-semibold text-[11px] shrink-0"
+                             style="background:{{ row.employee.name|avatar_bg }};color:{{ row.employee.name|avatar_fg }}">{{ row.employee.name|initials }}</div>
+                        <div>
+                            <a href="{% url 'employee_detail' row.employee.slug %}" class="font-semibold hover:opacity-80" style="color:{{ row.employee.name|avatar_fg }}">{{ row.employee.name }}</a>
+                            <div class="text-[11.5px] text-[#5B6B82] mt-0.5">{{ row.employee.division.name }} · {{ row.employee.department.name }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-5 py-3 text-[#5B6B82]">{{ row.completed }}</td>
+                <td class="px-5 py-3 text-[#046B62] font-medium">{{ row.on_time }}</td>
+                <td class="px-5 py-3 text-[#B23934] font-medium">{{ row.late }}</td>
+                <td class="px-5 py-3">
+                    {% if row.overdue_now %}<span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#FCE8E7] text-[#B23934]">{{ row.overdue_now }}</span>{% else %}0{% endif %}
+                </td>
+                <td class="px-5 py-3">
+                    {% if row.rate is not None %}
+                    <div class="text-[12.5px] font-semibold mb-1 {% if row.rate >= 80 %}text-[#046B62]{% elif row.rate >= 50 %}text-[#946318]{% else %}text-[#B23934]{% endif %}">{{ row.rate }}%</div>
+                    {% seg_bar row.on_time "#00C4B4" row.late "#E8615C" %}
+                    {% else %}<span class="text-[#5B6B82]">—</span>{% endif %}
+                </td>
+                <td class="px-5 py-3">
+                    {% if row.regular %}
+                        <span class="text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-[#E3FBF8] text-[#046B62]">Regular</span>
+                    {% else %}
+                        <span class="text-[11.5px] font-semibold px-2.5 py-1 rounded-full bg-[#FCE8E7] text-[#B23934]">Irregular</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td class="px-5 py-4 text-[#5B6B82]" colspan="7">No employees match this filter.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

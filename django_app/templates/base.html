@@ -1,0 +1,76 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{% block page_title %}DOB Team Hub{% endblock %}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% tailwind_css %}
+</head>
+<body class="bg-[#F5F8FA] text-[#0A1628] font-sans antialiased">
+{% if user.is_authenticated %}
+<div class="flex min-h-screen">
+
+    <aside class="w-[250px] shrink-0 bg-[#0A1628] text-white flex flex-col px-3.5 py-5.5 sticky top-0 h-screen overflow-y-auto">
+        <a href="{% url 'directory' %}" class="flex items-center gap-2.5 px-2 pb-4 mb-2 border-b border-white/10">
+            <div class="w-8.5 h-8.5 rounded-[9px] bg-[#00C4B4] flex items-center justify-center font-bold text-[#0A1628] text-[15px] shrink-0">D</div>
+            <div>
+                <div class="text-[15px] font-semibold text-white leading-tight">DOB Team Hub</div>
+                <div class="text-[11px] text-[#7E8CA6]">Employee &amp; Task Management</div>
+            </div>
+        </a>
+
+        <nav class="flex-1 mt-1">
+            {% for group in nav_groups %}
+            <div class="mb-1">
+                <div class="text-[10px] uppercase tracking-wider text-[#5C6B85] font-bold px-3 pt-3.5 pb-1.5">{{ group.label }}</div>
+                {% for item in group.items %}
+                <a href="{% url item.url %}"
+                   class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] font-medium transition
+                          {% if request.resolver_match.url_name == item.url %}bg-[#00C4B4] text-[#0A1628] font-semibold{% else %}text-[#B9C3D6] hover:bg-white/10 hover:text-white{% endif %}">
+                    <span>{{ item.icon }}</span>
+                    <span>{{ item.title }}</span>
+                </a>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </nav>
+
+        <div class="flex items-center justify-between gap-2 mt-2.5 mx-1 px-2.5 py-2 rounded-lg text-xs
+                    {% if user.is_staff %}bg-[#00C4B4] text-[#0A1628] font-semibold{% else %}bg-white/5 text-[#B9C3D6]{% endif %}">
+            <span>{% if user.is_staff %}Admin mode{% else %}View mode{% endif %} · {{ user.username }}</span>
+            {% if user.is_staff %}<a href="{% url 'admin:index' %}" class="underline">Panel</a>{% endif %}
+        </div>
+        <form method="post" action="{% url 'logout' %}" class="mt-1 mx-1">
+            {% csrf_token %}
+            <button type="submit" class="w-full text-left px-2.5 py-2 rounded-lg text-xs text-[#B9C3D6] hover:bg-white/10 hover:text-white">Log out</button>
+        </form>
+        <div class="px-3 pt-3 mt-2.5 text-[11px] text-[#5C6B85] border-t border-white/10">DOB Team Hub · v1.0</div>
+    </aside>
+
+    <div class="flex-1 min-w-0">
+        <header class="px-9 py-6 border-b border-[#E7ECF1] bg-white sticky top-0 z-10 flex justify-between items-start gap-5">
+            <div>
+                <h1 class="text-xl font-semibold m-0">{% block page_heading %}{% endblock %}</h1>
+                <p class="text-[13.5px] text-[#5B6B82] m-0 mt-1">{% block page_subtitle %}{% endblock %}</p>
+            </div>
+            <div class="text-[11.5px] text-[#5B6B82] bg-[#EEF1F5] px-3 py-1.5 rounded-full whitespace-nowrap">Today · {% now "d M Y" %}</div>
+        </header>
+
+        <main class="p-9">
+            {% if messages %}
+            <div class="mb-5 space-y-2">
+                {% for message in messages %}
+                <div class="px-4 py-3 rounded-lg text-sm bg-[#E3FBF8] text-[#046B62] border border-[#00C4B4]/30">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+{% else %}
+    {% block guest_content %}{% endblock %}
+{% endif %}
+</body>
+</html>

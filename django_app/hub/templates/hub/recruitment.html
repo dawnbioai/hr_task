@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block page_title %}Recruitment — DOB Team Hub{% endblock %}
+{% block page_heading %}Recruitment{% endblock %}
+{% block page_subtitle %}Open positions and interview rounds{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="text-[12px] uppercase tracking-wide text-[#5B6B82] font-semibold mb-3">Openings</div>
+    <div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));">
+        {% for o in openings %}
+        <div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm p-4">
+            <div class="text-[13.5px] font-semibold">{{ o.department.name }}</div>
+            <div class="text-[12px] text-[#5B6B82] mt-1">{{ o.department.division.name }}</div>
+            <div class="flex justify-between items-center mt-3">
+                <span class="text-[12.5px] text-[#5B6B82]">{{ o.positions }} position{{ o.positions|pluralize }}</span>
+                {% if user.is_staff %}
+                <form method="post" action="{% url 'opening_status_update' o.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <select name="status" onchange="this.form.submit()"
+                        class="text-[11.5px] font-medium px-2.5 py-1 rounded-full border-0 cursor-pointer
+                        {% if o.status == 'Open' %}bg-[#E3FBF8] text-[#046B62]
+                        {% elif o.status == 'Interviewing' %}bg-[#FDF1DF] text-[#946318]
+                        {% else %}bg-[#EEF1F5] text-[#5B6B82]{% endif %}">
+                        <option value="Open" {% if o.status == "Open" %}selected{% endif %}>Open</option>
+                        <option value="Interviewing" {% if o.status == "Interviewing" %}selected{% endif %}>Interviewing</option>
+                        <option value="On Hold" {% if o.status == "On Hold" %}selected{% endif %}>On Hold</option>
+                    </select>
+                </form>
+                {% else %}
+                <span class="text-[11.5px] font-medium px-2.5 py-1 rounded-full
+                    {% if o.status == 'Open' %}bg-[#E3FBF8] text-[#046B62]
+                    {% elif o.status == 'Interviewing' %}bg-[#FDF1DF] text-[#946318]
+                    {% else %}bg-[#EEF1F5] text-[#5B6B82]{% endif %}">{{ o.status }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}<p class="text-[13.5px] text-[#5B6B82]">No open positions.</p>{% endfor %}
+    </div>
+</div>
+
+<div>
+    <div class="text-[12px] uppercase tracking-wide text-[#5B6B82] font-semibold mb-3">Interview rounds</div>
+    <div class="space-y-4">
+        {% for r in rounds %}
+        <div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm p-5">
+            <div class="flex justify-between items-start gap-4">
+                <div>
+                    <div class="text-[14px] font-semibold">{{ r.position }}</div>
+                    <div class="text-[12px] text-[#5B6B82] mt-1">{{ r.date|date:"d M Y" }} · {{ r.time }}</div>
+                </div>
+                {% if r.meet_link %}<a href="{{ r.meet_link }}" target="_blank" rel="noopener" class="text-[12px] text-[#046B62] underline shrink-0">Meet link</a>{% endif %}
+            </div>
+            <table class="w-full text-[13px] mt-4">
+                <thead>
+                    <tr class="text-left text-[11px] uppercase tracking-wide text-[#5B6B82] border-b border-[#E7ECF1]">
+                        <th class="py-2">Candidate</th><th class="py-2">Background</th><th class="py-2">University</th><th class="py-2">CV</th><th class="py-2">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for c in r.candidates.all %}
+                    <tr class="border-b border-[#F0F3F6] last:border-0">
+                        <td class="py-2 font-medium">{{ c.name }}</td>
+                        <td class="py-2 text-[#5B6B82]">{{ c.background }}</td>
+                        <td class="py-2 text-[#5B6B82]">{{ c.university }}</td>
+                        <td class="py-2">
+                            {% if c.cv_file %}<a href="{{ c.cv_file.url }}" class="text-[#046B62] underline">File</a>
+                            {% elif c.cv_link %}<a href="{{ c.cv_link }}" target="_blank" rel="noopener" class="text-[#046B62] underline">View CV</a>
+                            {% else %}<span class="text-[#5B6B82]">—</span>{% endif %}
+                        </td>
+                        <td class="py-2">
+                            {% if user.is_staff %}
+                            <form method="post" action="{% url 'candidate_status_update' c.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <select name="status" onchange="this.form.submit()"
+                                    class="text-[11px] font-semibold px-2.5 py-1 rounded-full border-0 cursor-pointer
+                                    {% if c.status == 'selected' %}bg-[#E3FBF8] text-[#046B62]
+                                    {% elif c.status == 'not_selected' %}bg-[#FCE8E7] text-[#B23934]
+                                    {% else %}bg-[#FDF1DF] text-[#946318]{% endif %}">
+                                    <option value="waiting" {% if c.status == "waiting" %}selected{% endif %}>Waiting</option>
+                                    <option value="selected" {% if c.status == "selected" %}selected{% endif %}>Selected</option>
+                                    <option value="not_selected" {% if c.status == "not_selected" %}selected{% endif %}>Not Selected</option>
+                                </select>
+                            </form>
+                            {% else %}
+                            {% if c.status == 'selected' %}
+                                <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#E3FBF8] text-[#046B62]">Selected</span>
+                            {% elif c.status == 'not_selected' %}
+                                <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#FCE8E7] text-[#B23934]">Not Selected</span>
+                            {% else %}
+                                <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#FDF1DF] text-[#946318]">Waiting</span>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td class="py-3 text-[#5B6B82]" colspan="5">No candidates yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% empty %}<p class="text-[13.5px] text-[#5B6B82]">No interview rounds scheduled.</p>{% endfor %}
+    </div>
+</div>
+{% endblock %}

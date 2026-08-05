@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block page_title %}{{ employee.name }} — DOB Team Hub{% endblock %}
+{% block page_heading %}{{ employee.name }}{% endblock %}
+{% block page_subtitle %}{{ employee.role }} · {{ employee.department.name }}{% endblock %}
+
+{% block content %}
+<div class="grid gap-6" style="grid-template-columns:2fr 1fr;">
+    <div class="space-y-6">
+        <div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm p-5">
+            <div class="text-[12px] uppercase tracking-wide text-[#5B6B82] font-semibold mb-3">Responsibilities</div>
+            <ul class="list-disc pl-5 space-y-1.5 text-[13.5px]">
+                {% for r in employee.responsibilities_list %}
+                <li>{{ r }}</li>
+                {% empty %}<li class="text-[#5B6B82] list-none -ml-5">No responsibilities recorded.</li>{% endfor %}
+            </ul>
+        </div>
+
+        <div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm overflow-hidden">
+            <div class="text-[12px] uppercase tracking-wide text-[#5B6B82] font-semibold px-5 pt-4 pb-2">Tasks</div>
+            <table class="w-full text-[13px]">
+                <thead>
+                    <tr class="text-left text-[11px] uppercase tracking-wide text-[#5B6B82] border-b border-[#E7ECF1]">
+                        <th class="px-5 py-2.5">Task</th><th class="px-5 py-2.5">Status</th><th class="px-5 py-2.5">Due</th><th class="px-5 py-2.5">Completed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for t in tasks %}
+                    <tr class="border-b border-[#F0F3F6] last:border-0">
+                        <td class="px-5 py-2.5">{{ t.description }}</td>
+                        <td class="px-5 py-2.5">
+                            <span class="inline-flex items-center gap-1.5 text-[11.5px] font-medium px-2.5 py-1 rounded-full border border-[#E7ECF1]
+                                {% if t.status == 'done' %}text-[#046B62]{% elif t.status == 'progress' %}text-[#946318]{% else %}text-[#5B6B82]{% endif %}">
+                                <span class="w-1.5 h-1.5 rounded-full {% if t.status == 'done' %}bg-[#00C4B4]{% elif t.status == 'progress' %}bg-[#F0A93A]{% else %}bg-[#5B6B82]{% endif %}"></span>
+                                {{ t.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-5 py-2.5 text-[#5B6B82]">{{ t.due|date:"d M Y" }}</td>
+                        <td class="px-5 py-2.5 text-[#5B6B82]">{{ t.completed_date|date:"d M Y"|default:"—" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td class="px-5 py-4 text-[#5B6B82]" colspan="4">No tasks yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm p-5">
+            <div class="w-12 h-12 rounded-full bg-[#E3FBF8] text-[#046B62] flex items-center justify-center font-semibold text-[16px] mb-3">
+                {{ employee.name|slice:":1" }}
+            </div>
+            <div class="text-[14px] font-semibold">{{ employee.name }}</div>
+            <div class="text-[12.5px] text-[#5B6B82] mb-4">{{ employee.role }}</div>
+            <dl class="space-y-2.5 text-[13px]">
+                <div class="flex justify-between gap-3"><dt class="text-[#5B6B82]">Division</dt><dd>{{ employee.division.name }}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-[#5B6B82]">Department</dt><dd class="text-right">{{ employee.department.name }}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-[#5B6B82]">Email</dt><dd class="text-right">{{ employee.email|default:"—" }}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-[#5B6B82]">Phone</dt><dd class="text-right">{{ employee.phone|default:"—" }}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-[#5B6B82]">bKash</dt><dd class="text-right">{{ employee.bkash|default:"—" }}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-[#5B6B82]">Salary</dt><dd class="text-right">৳{{ employee.salary }}</dd></div>
+            </dl>
+        </div>
+
+        {% if employee.contract %}
+        <div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm p-5">
+            <div class="text-[12px] uppercase tracking-wide text-[#5B6B82] font-semibold mb-3">Contract</div>
+            <dl class="space-y-2.5 text-[13px]">
+                <div class="flex justify-between gap-3"><dt class="text-[#5B6B82]">Joined</dt><dd>{{ employee.contract.joined|date:"d M Y" }}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-[#5B6B82]">Last renewal</dt><dd>{{ employee.contract.last_renewal|date:"d M Y" }}</dd></div>
+                <div class="flex justify-between gap-3"><dt class="text-[#5B6B82]">Next renewal</dt><dd>{{ employee.contract.next_renewal|date:"d M Y" }}</dd></div>
+            </dl>
+            {% if employee.contract.notes %}<p class="text-[12.5px] text-[#5B6B82] mt-3 pt-3 border-t border-[#F0F3F6]">{{ employee.contract.notes }}</p>{% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

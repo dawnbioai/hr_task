@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — DOB Team Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="brand-mark" style="margin-bottom:6px">D</div>
+    <h1>Admin sign-in</h1>
+    <p>Enter the shared admin password to edit employees, tasks, payroll and more. Everyone else can keep browsing in View mode without signing in.</p>
+    <form id="login-form">
+      <div class="form-field">
+        <label for="password">Password</label>
+        <input type="password" id="password" autocomplete="current-password" autofocus>
+      </div>
+      <div id="login-error"></div>
+      <div class="form-actions" style="margin-top:16px">
+        <button type="submit" class="btn-primary" style="width:100%">Sign in</button>
+      </div>
+    </form>
+    <a class="back-view-link" href="../directory/">&larr; Back to View mode</a>
+  </div>
+</div>
+
+<script src="../assets/auth.js"></script>
+<script>
+  document.getElementById("login-form").addEventListener("submit", e=>{
+    e.preventDefault();
+    const pw = document.getElementById("password").value;
+    if(Auth.login(pw)){
+      location.href = "panel/";
+    }else{
+      document.getElementById("login-error").innerHTML = `<div class="login-error">Incorrect password. Please try again.</div>`;
+    }
+  });
+</script>
+</body>
+</html>

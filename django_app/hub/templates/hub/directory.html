@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load hub_extras %}
+{% block page_title %}Directory — DOB Team Hub{% endblock %}
+{% block page_heading %}Directory{% endblock %}
+{% block page_subtitle %}Everyone's current task, grouped by division{% endblock %}
+
+{% block content %}
+{% if user.is_staff %}
+<details class="mb-6 bg-white border-2 border-[#00C4B4] rounded-xl shadow-sm" open>
+    <summary class="cursor-pointer px-5 py-4 text-[16px] font-bold select-none flex items-center gap-2.5">
+        <span class="w-6 h-6 rounded-full bg-[#00C4B4] text-[#0A1628] flex items-center justify-center text-[15px] leading-none shrink-0">+</span>
+        Add a new task
+    </summary>
+    <form method="post" action="{% url 'task_create' %}" class="px-5 pb-5 flex flex-wrap items-end gap-3.5">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <div>
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1">Employee</label>
+            <select name="employee" required class="text-[14px] px-3.5 py-3 rounded-lg border border-[#E7ECF1] bg-white min-w-[190px]">
+                {% for e in all_employees %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="flex-1 min-w-[220px]">
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1">Task description</label>
+            <input type="text" name="description" required class="w-full text-[14px] px-3.5 py-3 rounded-lg border border-[#E7ECF1] bg-white">
+        </div>
+        <div>
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1">Status</label>
+            <select name="status" class="text-[14px] px-3.5 py-3 rounded-lg border border-[#E7ECF1] bg-white">
+                <option value="todo">To-Do</option>
+                <option value="progress">In Progress</option>
+                <option value="done">Done</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1">Due date</label>
+            <input type="date" name="due" required class="text-[14px] px-3.5 py-3 rounded-lg border border-[#E7ECF1] bg-white">
+        </div>
+        <button class="bg-[#00C4B4] text-[#0A1628] text-[14px] font-bold px-5 py-3 rounded-lg hover:opacity-90">Add task</button>
+    </form>
+</details>
+{% endif %}
+
+<div class="grid gap-3.5 mb-6" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+    <div class="bg-white border border-[#E7ECF1] border-t-[3px] rounded-xl shadow-sm px-4.5 py-4">
+        <div class="text-2xl font-bold leading-none">{{ stats.employees }}</div>
+        <div class="text-xs text-[#5B6B82] mt-1.5">Employees</div>
+    </div>
+    <div class="bg-white border border-[#E7ECF1] border-t-[3px] border-t-[#F0A93A] rounded-xl shadow-sm px-4.5 py-4">
+        <div class="text-2xl font-bold leading-none">{{ stats.in_progress }}</div>
+        <div class="text-xs text-[#5B6B82] mt-1.5">Tasks in progress</div>
+    </div>
+    <div class="bg-white border border-[#E7ECF1] border-t-[3px] rounded-xl shadow-sm px-4.5 py-4">
+        <div class="text-2xl font-bold leading-none">{{ stats.todo }}</div>
+        <div class="text-xs text-[#5B6B82] mt-1.5">Tasks to-do</div>
+    </div>
+    <div class="bg-white border border-[#E7ECF1] border-t-[3px] border-t-[#E8615C] rounded-xl shadow-sm px-4.5 py-4">
+        <div class="text-2xl font-bold leading-none">{{ stats.overdue }}</div>
+        <div class="text-xs text-[#5B6B82] mt-1.5">Needs attention (overdue)</div>
+    </div>
+</div>
+
+{% if user.is_staff %}
+<div class="mb-3.5 text-[11.5px] text-[#5B6B82]">Drag a task card between columns to update its status/due date instantly.</div>
+{% endif %}
+<div class="grid gap-3.5 mb-4" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));" id="task-overview-board">
+    {% for col in task_overview %}
+    <div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm p-3.5 task-column" data-column="{{ col.key }}">
+        <div class="flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-wide text-[#5B6B82] mb-2.5">
+            <span class="w-2 h-2 rounded-full shrink-0" style="background:{{ col.dot }}"></span>
+            {{ col.label }} ({{ col.items|length }})
+        </div>
+        <div class="task-column-body min-h-[40px]">
+        {% for t in col.items %}
+        <div class="px-3 py-2.5 mb-1.5 rounded-lg {% if user.is_staff %}task-card cursor-grab{% endif %}"
+             style="background:{{ col.bg }}; border-left: 3px solid {{ col.dot }};"
+             {% if user.is_staff %}draggable="true" data-task-id="{{ t.pk }}"{% endif %}>
+            <div class="text-[12.5px] font-semibold">{{ t.employee.name }}</div>
+            <div class="text-xs text-[#42506B] truncate" title="{{ t.description }}">{{ t.description }}</div>
+            <div class="text-[10.5px] text-[#5B6B82] mt-1 font-mono">
+                {% if col.key == "completed" %}Done {{ t.completed_date|date:"d M" }}
+                {% else %}Due {{ t.due|date:"d M" }}{% endif %}
+            </div>
+        </div>
+        {% empty %}<div class="text-xs text-[#5B6B82] empty-hint">Nothing here.</div>{% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<form method="get" class="flex items-center gap-3 mb-6">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search by name, designation or department…"
+           class="min-w-[280px] text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white focus:outline-none focus:ring-2 focus:ring-[#00C4B4]">
+    <button class="bg-[#0A1628] text-white text-[13px] font-semibold px-4 py-2.5 rounded-lg">Search</button>
+    <span class="text-[12.5px] text-[#5B6B82] ml-auto">{{ total }} of {{ stats.employees }} employees</span>
+</form>
+
+{% for division, employees in divisions.items %}
+<div class="mb-8">
+    <div class="flex items-baseline gap-3 mb-3.5">
+        <a href="{% url 'division_detail' division.pk %}" class="text-[14.5px] font-semibold hover:text-[#046B62]">{{ division.name }}</a>
+        <div class="flex-1 h-px bg-[#E7ECF1]"></div>
+        <span class="text-xs text-[#5B6B82] whitespace-nowrap">{{ employees|length }} employee{{ employees|length|pluralize }}</span>
+    </div>
+    <div class="grid gap-4" style="grid-template-columns:repeat(auto-fill,minmax(270px,1fr));">
+        {% for emp in employees %}
+        <a href="{% url 'employee_detail' emp.slug %}" class="block bg-white border border-[#E7ECF1] rounded-xl p-4.5 shadow-sm hover:border-[#00C4B4] transition">
+            <div class="flex items-center gap-3 mb-3.5">
+                <div class="w-[42px] h-[42px] rounded-full flex items-center justify-center font-semibold text-[14.5px] shrink-0"
+                     style="background:{{ emp.name|avatar_bg }};color:{{ emp.name|avatar_fg }}">{{ emp.name|initials }}</div>
+                <div class="min-w-0">
+                    <div class="text-[14.5px] font-semibold leading-tight truncate">{{ emp.name }}</div>
+                    <div class="text-xs text-[#5B6B82] mt-0.5 truncate">{{ emp.role }}</div>
+                </div>
+            </div>
+            <span class="inline-flex items-center text-[11.5px] font-medium px-2.5 py-1 rounded-full border border-[#E7ECF1] text-[#5B6B82] bg-white">{{ emp.department.name }}</span>
+            <div class="border-t border-[#E7ECF1] mt-3.5 mb-3"></div>
+            <div class="text-[10.5px] tracking-wide uppercase text-[#93A0B4] font-semibold mb-1.5">Current task</div>
+            {% with t=emp.current_task %}
+            <div class="text-[13.5px] font-medium leading-snug mb-2">{{ t.description|default:"No active task assigned" }}</div>
+            {% if t %}{% status_chip t.status %}{% due_note t.due today t.status %}{% endif %}
+            {% endwith %}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% empty %}
+<p class="text-[13.5px] text-[#5B6B82]">No employees match "{{ q }}".</p>
+{% endfor %}
+
+{% if user.is_staff %}
+<script>
+(function(){
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    const board = document.getElementById('task-overview-board');
+    if(!board || !csrfToken) return;
+
+    board.querySelectorAll('.task-card').forEach(card => {
+        card.addEventListener('dragstart', e => {
+            e.dataTransfer.setData('text/plain', card.dataset.taskId);
+            card.classList.add('opacity-40');
+        });
+        card.addEventListener('dragend', () => card.classList.remove('opacity-40'));
+    });
+
+    board.querySelectorAll('.task-column').forEach(col => {
+        col.addEventListener('dragover', e => {
+            e.preventDefault();
+            col.classList.add('ring-2', 'ring-[#00C4B4]');
+        });
+        col.addEventListener('dragleave', () => col.classList.remove('ring-2', 'ring-[#00C4B4]'));
+        col.addEventListener('drop', e => {
+            e.preventDefault();
+            col.classList.remove('ring-2', 'ring-[#00C4B4]');
+            const taskId = e.dataTransfer.getData('text/plain');
+            const column = col.dataset.column;
+            if(!taskId || !column) return;
+            fetch(`/tasks/${taskId}/move/${column}/`, {
+                method: 'POST',
+                headers: {'X-CSRFToken': csrfToken},
+            }).then(r => { if(r.ok) location.reload(); });
+        });
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

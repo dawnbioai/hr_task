@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block page_title %}Documentation — DOB Team Hub{% endblock %}
+{% block page_heading %}Documentation{% endblock %}
+{% block page_subtitle %}Certificates, email templates and rules{% endblock %}
+
+{% block content %}
+{% if user.is_staff %}
+<details class="mb-8 bg-white border border-[#E7ECF1] rounded-xl shadow-sm">
+    <summary class="cursor-pointer px-4 py-3 text-[13px] font-semibold select-none">+ Add document</summary>
+    <form method="post" action="{% url 'document_create' %}" enctype="multipart/form-data" class="px-4 pb-4 flex flex-wrap items-end gap-3">
+        {% csrf_token %}
+        <div>
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1">Category</label>
+            <select name="category" id="doc-category" required class="text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white min-w-[170px]">
+                {% for key, label in categories %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+            </select>
+        </div>
+        <div id="doc-department-field">
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1">Department</label>
+            <select name="department" class="text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white min-w-[170px]">
+                {% for d in departments %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="flex-1 min-w-[180px]">
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1">Title</label>
+            <input type="text" name="title" required class="w-full text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
+        </div>
+        <div class="flex-1 min-w-[180px]">
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1">Short details</label>
+            <input type="text" name="subtitle" class="w-full text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
+        </div>
+        <div>
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1">File</label>
+            <input type="file" name="file" class="text-[13px]">
+        </div>
+        <button class="bg-[#00C4B4] text-[#0A1628] text-[13px] font-semibold px-4 py-2.5 rounded-lg">Add document</button>
+    </form>
+    <p class="px-4 pb-3 text-[11px] text-[#5B6B82]">For Department Rule, uploading a new file replaces that department's existing document instead of adding a duplicate.</p>
+</details>
+<script>
+(function(){
+    const cat = document.getElementById('doc-category');
+    const deptField = document.getElementById('doc-department-field');
+    function sync(){ deptField.style.display = cat.value === 'dept_rule' ? '' : 'none'; }
+    if(cat){ cat.addEventListener('change', sync); sync(); }
+})();
+</script>
+{% endif %}
+{% for group in groups %}
+<div class="mb-8">
+    <div class="text-[12px] uppercase tracking-wide text-[#5B6B82] font-semibold mb-3">{{ group.label }}</div>
+    <div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr));">
+        {% for doc in group.docs %}
+        <div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm p-4 flex flex-col justify-between">
+            <div>
+                <div class="text-[13.5px] font-semibold">{{ doc.title }}</div>
+                <div class="text-[12px] text-[#5B6B82] mt-1">{{ doc.subtitle }}</div>
+            </div>
+            <div class="flex justify-between items-center mt-4">
+                <span class="text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#EEF1F5] text-[#5B6B82]">{{ doc.kind }}</span>
+                <a href="{% url 'document_download' doc.pk %}" class="text-[12px] font-medium text-[#046B62] underline">Download</a>
+            </div>
+        </div>
+        {% empty %}<p class="text-[13.5px] text-[#5B6B82]">Nothing in this category yet.</p>{% endfor %}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

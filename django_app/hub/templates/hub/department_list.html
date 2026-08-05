@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load hub_extras %}
+{% block page_title %}Departments — DOB Team Hub{% endblock %}
+{% block page_heading %}By Department{% endblock %}
+{% block page_subtitle %}Task status breakdown per department, grouped by division{% endblock %}
+
+{% block content %}
+<form method="get" class="mb-6">
+    <select name="month" onchange="this.form.submit()" class="text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
+        <option value="all" {% if selected_month == "all" %}selected{% endif %}>All time</option>
+        {% for m in months %}
+        <option value="{{ m }}" {% if selected_month == m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+    </select>
+</form>
+
+{% for group in groups %}
+<div class="mb-8">
+    <div class="flex items-baseline gap-3 mb-3.5">
+        <h3 class="text-[14.5px] font-semibold m-0">{{ group.division.name }}</h3>
+        <div class="flex-1 h-px bg-[#E7ECF1]"></div>
+        <span class="text-xs text-[#5B6B82] whitespace-nowrap">{{ group.cards|length }} department{{ group.cards|length|pluralize }}</span>
+    </div>
+    <div class="grid gap-3.5" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr));">
+        {% for card in group.cards %}
+        <a href="{% url 'department_detail' card.department.pk %}?month={{ selected_month }}"
+           class="block bg-white border border-[#E7ECF1] rounded-xl p-4 shadow-sm hover:border-[#00C4B4] transition">
+            <div class="flex justify-between items-baseline mb-2.5 gap-2">
+                <span class="text-[13px] font-semibold leading-tight">{{ card.department.name }}</span>
+                <span class="text-[11.5px] text-[#5B6B82] whitespace-nowrap">{{ card.total }} task{{ card.total|pluralize }}</span>
+            </div>
+            {% seg_bar card.counts.todo "#5B6B82" card.counts.progress "#F0A93A" card.counts.done "#00C4B4" %}
+            <div class="flex gap-2.5 flex-wrap text-[10.5px] text-[#5B6B82]">
+                <span class="flex items-center gap-1"><i class="w-1.5 h-1.5 rounded-full inline-block" style="background:#5B6B82"></i>{{ card.counts.todo }}</span>
+                <span class="flex items-center gap-1"><i class="w-1.5 h-1.5 rounded-full inline-block" style="background:#F0A93A"></i>{{ card.counts.progress }}</span>
+                <span class="flex items-center gap-1"><i class="w-1.5 h-1.5 rounded-full inline-block" style="background:#00C4B4"></i>{{ card.counts.done }}</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

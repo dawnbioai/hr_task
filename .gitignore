@@ -1,0 +1,5 @@
+# OS / cloud-sync metadata
+desktop.ini
+
+# Local AI-assistant tool config (machine-specific, not project source)
+.claude/

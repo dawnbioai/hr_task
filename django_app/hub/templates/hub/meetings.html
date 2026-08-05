@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block page_title %}Meetings — DOB Team Hub{% endblock %}
+{% block page_heading %}Meetings{% endblock %}
+{% block page_subtitle %}Division syncs and key discussion points{% endblock %}
+
+{% block content %}
+<div class="grid gap-3.5 mb-6" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+    <div class="bg-white border border-[#E7ECF1] border-t-[3px] border-t-[#00C4B4] rounded-xl shadow-sm px-4.5 py-4">
+        <div class="text-2xl font-bold leading-none">{{ stats.count }}</div>
+        <div class="text-xs text-[#5B6B82] mt-1.5">Meetings logged</div>
+    </div>
+    <div class="bg-white border border-[#E7ECF1] border-t-[3px] rounded-xl shadow-sm px-4.5 py-4">
+        <div class="text-2xl font-bold leading-none">{{ stats.divisions_covered }}</div>
+        <div class="text-xs text-[#5B6B82] mt-1.5">Divisions covered</div>
+    </div>
+    <div class="bg-white border border-[#E7ECF1] border-t-[3px] border-t-[#E8615C] rounded-xl shadow-sm px-4.5 py-4">
+        <div class="text-2xl font-bold leading-none">{{ stats.total_absences }}</div>
+        <div class="text-xs text-[#5B6B82] mt-1.5">Total absences logged</div>
+    </div>
+</div>
+
+<div class="grid gap-4 mb-8" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));">
+    <div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm p-4.5">
+        <div class="text-[10.5px] uppercase tracking-wide text-[#93A0B4] font-semibold mb-2.5">Meetings by Division</div>
+        {% for name, c in div_rows %}
+        <div class="flex justify-between items-center py-1.5 {% if not forloop.first %}border-t border-dashed border-[#E7ECF1]{% endif %} text-[13px]">
+            <span>{{ name }}</span><span class="font-mono">{{ c }}</span>
+        </div>
+        {% empty %}<div class="text-xs text-[#5B6B82]">No meetings logged yet.</div>{% endfor %}
+    </div>
+    <div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm p-4.5">
+        <div class="text-[10.5px] uppercase tracking-wide text-[#93A0B4] font-semibold mb-2.5">Attendance — Most Absences</div>
+        {% for name, c in abs_rows %}
+        <div class="flex justify-between items-center py-1.5 {% if not forloop.first %}border-t border-dashed border-[#E7ECF1]{% endif %} text-[13px]">
+            <span>{{ name }}</span><span class="font-bold text-[#B23934]">{{ c }}</span>
+        </div>
+        {% empty %}<div class="text-xs text-[#5B6B82]">No absences logged.</div>{% endfor %}
+    </div>
+</div>
+
+<form method="get" class="flex items-center gap-3 mb-5 flex-wrap">
+    <select name="month" onchange="this.form.submit()" class="text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
+        <option value="all" {% if selected_month == "all" %}selected{% endif %}>All months</option>
+        {% for m in months %}
+        <option value="{{ m }}" {% if selected_month == m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+    </select>
+    <select name="department" onchange="this.form.submit()" class="text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
+        <option value="all" {% if selected_department == "all" %}selected{% endif %}>All departments</option>
+        {% for d in departments %}
+        <option value="{{ d.id }}" {% if selected_department == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+        {% endfor %}
+    </select>
+    <span class="text-[12.5px] text-[#5B6B82] ml-auto">{{ meetings|length }} meeting{{ meetings|length|pluralize }}</span>
+</form>
+
+{% if user.is_staff %}
+<details class="mb-6 bg-white border-2 border-[#00C4B4] rounded-xl shadow-sm">
+    <summary class="cursor-pointer px-5 py-4 text-[16px] font-bold select-none flex items-center gap-2.5">
+        <span class="w-6 h-6 rounded-full bg-[#00C4B4] text-[#0A1628] flex items-center justify-center text-[15px] leading-none shrink-0">+</span>
+        Add a new meeting
+    </summary>
+    <form method="post" action="{% url 'meeting_create' %}" class="px-5 pb-5 grid gap-3.5" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
+        {% csrf_token %}
+        <div>
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1">Division(s)</label>
+            <select name="divisions" multiple size="4" class="w-full text-[13px] px-3 py-2 rounded-lg border border-[#E7ECF1] bg-white">
+                {% for d in all_divisions %}<option value="{{ d.id }}">{{ d.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1">Title</label>
+            <input type="text" name="topic" required class="w-full text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1 mt-3">Date</label>
+            <input type="date" name="date" required class="w-full text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
+        </div>
+        <div>
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1">Key points (one per line)</label>
+            <textarea name="points" rows="4" class="w-full text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white"></textarea>
+        </div>
+        <div>
+            <label class="block text-[11px] font-medium text-[#5B6B82] mb-1">Absences</label>
+            <select name="absent_employees" multiple size="4" class="w-full text-[13px] px-3 py-2 rounded-lg border border-[#E7ECF1] bg-white">
+                {% for e in all_employees %}<option value="{{ e.id }}">{{ e.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="flex items-end">
+            <button class="bg-[#00C4B4] text-[#0A1628] text-[14px] font-bold px-5 py-3 rounded-lg hover:opacity-90">Add meeting</button>
+        </div>
+    </form>
+</details>
+{% endif %}
+
+<div class="space-y-4">
+{% for m in meetings %}
+    <div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm p-5">
+        <div class="flex justify-between items-start gap-4">
+            <div>
+                <div class="text-[15px] font-semibold">{{ m.topic }}</div>
+                <div class="text-xs text-[#5B6B82] mt-1 font-mono">{{ m.date|date:"d M Y" }}</div>
+            </div>
+            <div class="flex flex-col items-end gap-1.5">
+                <span class="inline-flex items-center text-[11.5px] font-medium px-2.5 py-1 rounded-full border border-[#E7ECF1] text-[#5B6B82] bg-white whitespace-nowrap">
+                    {% for d in m.divisions.all %}{{ d.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </span>
+                {% if m.departments.all %}
+                <span class="inline-flex items-center text-[11px] font-medium px-2.5 py-1 rounded-full bg-[#EEF1F5] text-[#5B6B82] whitespace-nowrap">
+                    {% for d in m.departments.all %}{{ d.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        <ul class="list-disc pl-5 mt-3 space-y-1 text-[13.5px] text-[#2C3A55]">
+            {% for p in m.points_list %}<li>{{ p }}</li>{% endfor %}
+        </ul>
+        <div class="flex gap-2 flex-wrap items-center text-xs text-[#5B6B82] mt-3 pt-3 border-t border-[#F0F3F6]">
+            <span>Absent:</span>
+            {% for e in m.absent_employees.all %}
+            <span class="bg-[#FCE8E7] text-[#B23934] text-[11px] font-medium px-2 py-0.5 rounded-full">{{ e.name }}</span>
+            {% empty %}<span>None</span>{% endfor %}
+        </div>
+    </div>
+{% empty %}
+    <p class="text-[13.5px] text-[#5B6B82]">No meetings match this filter.</p>
+{% endfor %}
+</div>
+{% endblock %}

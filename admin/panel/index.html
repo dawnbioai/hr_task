@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — DOB Team Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<div class="admin-banner"><b>ADMIN MODE</b> — changes save immediately to this browser's data. <a href="#" id="logout-link">Log out to View mode</a></div>
+<div class="app">
+  <div id="sidebar-mount"></div>
+  <main class="main">
+    <div id="topbar-mount"></div>
+    <div class="pages">
+      <section class="page active">
+        <div class="panel-tabs" id="panel-tabs">
+          <button class="panel-tab active" data-tab="employees">Employees</button>
+          <button class="panel-tab" data-tab="tasks">Tasks</button>
+          <button class="panel-tab" data-tab="contracts">Contracts</button>
+          <button class="panel-tab" data-tab="recruitment">Recruitment</button>
+          <button class="panel-tab" data-tab="meetings">Meetings</button>
+          <button class="panel-tab" data-tab="documents">Documents</button>
+          <button class="panel-tab" data-tab="data">Data</button>
+        </div>
+
+        <div class="panel-section active" id="tab-employees">
+          <div class="form-card">
+            <h3>Add employee</h3>
+            <form id="employee-form">
+              <div class="form-grid">
+                <div class="form-field"><label>Full name</label><input type="text" name="name" required></div>
+                <div class="form-field"><label>Role / designation</label><input type="text" name="role" required></div>
+                <div class="form-field"><label>Division</label><select name="division"></select></div>
+                <div class="form-field"><label>Department</label><select name="dept"></select></div>
+                <div class="form-field"><label>bKash number</label><input type="text" name="bkash"></div>
+                <div class="form-field"><label>Salary (৳)</label><input type="number" name="salary" min="0"></div>
+              </div>
+              <div class="form-actions"><button type="submit" class="btn-primary">Add employee</button></div>
+            </form>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Employee</th><th>Division</th><th>Department</th><th>Salary</th><th></th></tr></thead>
+            <tbody id="employees-body"></tbody>
+          </table>
+        </div>
+
+        <div class="panel-section" id="tab-tasks">
+          <div class="form-card">
+            <h3>Add task</h3>
+            <form id="task-form">
+              <div class="form-grid">
+                <div class="form-field"><label>Employee</label><select name="emp"></select></div>
+                <div class="form-field" style="grid-column:1/-1"><label>Task description</label><input type="text" name="task" required></div>
+                <div class="form-field"><label>Status</label><select name="status"><option value="todo">To-Do</option><option value="progress">In Progress</option><option value="done">Done</option></select></div>
+                <div class="form-field"><label>Due date</label><input type="date" name="due" required></div>
+                <div class="form-field"><label>Completed date (if Done)</label><input type="date" name="date"></div>
+              </div>
+              <div class="form-actions"><button type="submit" class="btn-primary">Add task</button></div>
+            </form>
+          </div>
+          <div class="page-toolbar">
+            <select id="tasks-filter-emp"></select>
+            <span class="toolbar-count" id="tasks-count"></span>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Employee</th><th>Task</th><th>Status</th><th>Due</th><th>Completed</th><th></th></tr></thead>
+            <tbody id="tasks-body"></tbody>
+          </table>
+        </div>
+
+        <div class="panel-section" id="tab-contracts">
+          <table class="data-table">
+            <thead><tr><th>Employee</th><th>Joined</th><th>Last Renewal</th><th>Notes</th><th></th></tr></thead>
+            <tbody id="contracts-body"></tbody>
+          </table>
+        </div>
+
+        <div class="panel-section" id="tab-recruitment">
+          <div class="form-card">
+            <h3>Add hiring need</h3>
+            <form id="opening-form">
+              <div class="form-grid">
+                <div class="form-field"><label>Department</label><select name="dept"></select></div>
+                <div class="form-field"><label>Division</label><select name="division"></select></div>
+                <div class="form-field"><label>Positions needed</label><input type="number" name="positions" min="1" value="1"></div>
+                <div class="form-field"><label>Status</label><select name="status"><option>Open</option><option>Interviewing</option><option>On Hold</option></select></div>
+              </div>
+              <div class="form-actions"><button type="submit" class="btn-primary">Add opening</button></div>
+            </form>
+          </div>
+          <table class="data-table" style="margin-bottom:26px">
+            <thead><tr><th>Department</th><th>Division</th><th>Positions</th><th>Status</th><th></th></tr></thead>
+            <tbody id="openings-body"></tbody>
+          </table>
+
+          <div class="form-card">
+            <h3>Schedule interview round</h3>
+            <form id="round-form">
+              <div class="form-grid">
+                <div class="form-field" style="grid-column:1/-1"><label>Position</label><input type="text" name="position" required></div>
+                <div class="form-field"><label>Date</label><input type="date" name="date" required></div>
+                <div class="form-field"><label>Time</label><input type="text" name="time" placeholder="e.g. 11:00 AM"></div>
+                <div class="form-field" style="grid-column:1/-1"><label>Google Meet link</label><input type="text" name="meetLink" placeholder="https://meet.google.com/..."></div>
+              </div>
+              <div class="form-actions"><button type="submit" class="btn-primary">Add round</button></div>
+            </form>
+          </div>
+          <div id="rounds-list"></div>
+        </div>
+
+        <div class="panel-section" id="tab-meetings">
+          <div class="form-card">
+            <h3>Log a meeting</h3>
+            <form id="meeting-form">
+              <div class="form-grid">
+                <div class="form-field"><label>Date</label><input type="date" name="date" required></div>
+                <div class="form-field"><label>Division(s)</label><input type="text" name="division" placeholder="e.g. DBS, DiLab"></div>
+                <div class="form-field" style="grid-column:1/-1"><label>Topic</label><input type="text" name="topic" required></div>
+                <div class="form-field" style="grid-column:1/-1"><label>Key points (one per line)</label><textarea name="points"></textarea></div>
+                <div class="form-field" style="grid-column:1/-1"><label>Absent (comma-separated names)</label><input type="text" name="absent"></div>
+              </div>
+              <div class="form-actions"><button type="submit" class="btn-primary">Log meeting</button></div>
+            </form>
+          </div>
+          <div id="meetings-admin-list"></div>
+        </div>
+
+        <div class="panel-section" id="tab-documents">
+          <div class="page-toolbar">
+            <select id="doc-category">
+              <option value="certDocs">Certificates &amp; Recommendation Letters</option>
+              <option value="emailDocs">Email Templates</option>
+              <option value="generalRules">General Rules</option>
+              <option value="departmentRuleDocs">Department Rules</option>
+            </select>
+          </div>
+          <div class="form-card" id="doc-add-card">
+            <h3>Add document template</h3>
+            <form id="doc-form">
+              <div class="form-grid">
+                <div class="form-field"><label>Title</label><input type="text" name="title" required></div>
+                <div class="form-field"><label>Subtitle</label><input type="text" name="sub"></div>
+                <div class="form-field"><label>File type</label><select name="kind"><option>PDF</option><option>TXT</option></select></div>
+              </div>
+              <div class="form-field" style="margin-bottom:14px"><label>Upload a real file (PDF, DOCX, etc.) — optional</label><input type="file" name="file"></div>
+              <div class="form-field" style="margin-bottom:14px"><label>Or type placeholder text (one line per row, used only if no file is uploaded)</label><textarea name="body" rows="5"></textarea></div>
+              <div class="form-actions"><button type="submit" class="btn-primary">Add document</button></div>
+            </form>
+          </div>
+          <div id="docs-list"></div>
+        </div>
+
+        <div class="panel-section" id="tab-data">
+          <div class="form-card">
+            <h3>Export everything</h3>
+            <p class="form-note">Download the full underlying dataset as JSON — useful as a backup, or to move it to another browser/computer.</p>
+            <div class="form-actions"><button class="btn-secondary" id="export-json">Download full backup (.json)</button></div>
+          </div>
+          <div class="form-card">
+            <h3>Import backup</h3>
+            <p class="form-note">Replaces all current data in this browser with the contents of a previously exported .json backup.</p>
+            <div class="form-actions">
+              <input type="file" id="import-file" accept="application/json">
+            </div>
+          </div>
+          <div class="form-card">
+            <h3>Reset to sample data</h3>
+            <p class="form-note">Wipes everything in this browser and restores the original demo dataset. This cannot be undone.</p>
+            <div class="form-actions"><button class="btn-danger" id="reset-data">Reset all data</button></div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>window.ROOT="../../"; window.PAGE_ID=""; window.PAGE_TITLE="Admin Panel"; window.PAGE_SUBTITLE="Manage employees, tasks, contracts, recruitment, meetings and documents";</script>
+<script src="../../assets/db.js"></script>
+<script src="../../assets/auth.js"></script>
+<script>
+  if(!Auth.isAdmin()){ location.replace("../"); }
+</script>
+<script src="../../assets/nav.js"></script>
+<script src="panel.js"></script>
+</body>
+</html>

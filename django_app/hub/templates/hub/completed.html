@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load hub_extras %}
+{% block page_title %}Completed Tasks — DOB Team Hub{% endblock %}
+{% block page_heading %}Completed Tasks{% endblock %}
+{% block page_subtitle %}Everything marked done, across all employees{% endblock %}
+
+{% block content %}
+<form method="get" class="flex items-center gap-3 mb-6 flex-wrap">
+    <select name="month" onchange="this.form.submit()" class="text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
+        <option value="all" {% if selected_month == "all" %}selected{% endif %}>All months</option>
+        {% for m in months %}
+        <option value="{{ m }}" {% if selected_month == m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+    </select>
+    <select name="employee" onchange="this.form.submit()" class="text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
+        <option value="all" {% if selected_employee == "all" %}selected{% endif %}>All employees</option>
+        {% for e in employees %}
+        <option value="{{ e.id }}" {% if selected_employee == e.id|stringformat:"s" %}selected{% endif %}>{{ e.name }}</option>
+        {% endfor %}
+    </select>
+    <span class="text-[12.5px] text-[#5B6B82] ml-auto">{{ count }} task{{ count|pluralize }} completed</span>
+</form>
+
+<div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm overflow-hidden">
+    <table class="w-full text-[13px]">
+        <thead>
+            <tr class="text-left text-[11px] uppercase tracking-wide text-[#93A0B4] border-b border-[#E7ECF1] bg-[#FBFCFD]">
+                <th class="px-5 py-3">Employee</th><th class="px-5 py-3">Task</th><th class="px-5 py-3">Division</th><th class="px-5 py-3">Completed</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for t in tasks %}
+            <tr class="border-b border-[#F0F3F6] last:border-0 hover:bg-[#FAFCFD]">
+                <td class="px-5 py-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-7 h-7 rounded-full flex items-center justify-center font-semibold text-[11px] shrink-0"
+                             style="background:{{ t.employee.name|avatar_bg }};color:{{ t.employee.name|avatar_fg }}">{{ t.employee.name|initials }}</div>
+                        <div>
+                            <a href="{% url 'employee_detail' t.employee.slug %}" class="font-semibold hover:opacity-80" style="color:{{ t.employee.name|avatar_fg }}">{{ t.employee.name }}</a>
+                            <div class="text-[11.5px] text-[#5B6B82] mt-0.5">{{ t.employee.role }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-5 py-3">{{ t.description }}</td>
+                <td class="px-5 py-3">
+                    {{ t.employee.division.name }}
+                    <div class="text-[11.5px] text-[#5B6B82] mt-0.5">{{ t.employee.department.name }}</div>
+                </td>
+                <td class="px-5 py-3 font-mono text-[12.5px] text-[#5B6B82]">{{ t.completed_date|date:"d M Y" }}</td>
+            </tr>
+        {% empty %}
+            <tr><td class="px-5 py-4 text-[#5B6B82]" colspan="4">No completed tasks for this filter.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
