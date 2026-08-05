@@ -133,19 +133,20 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Manifest (cache-busted, hashed filenames) storage needs `collectstatic` to
-# have run, so it's only safe once DEBUG is off. In dev, runserver serves
-# static files itself without needing collectstatic.
+# Always use the hashed/manifest storage — not conditional on DEBUG. Making
+# this depend on DEBUG was a bug: if `collectstatic` gets run while DEBUG=True
+# in .env, it silently builds the wrong (unmanifested) output, and then
+# switching to DEBUG=False finds no manifest and 500s on every page. Local
+# `runserver` doesn't consult this at all (it serves static files straight
+# from source with its own dev-only handler), so this is safe in dev too —
+# it only matters for `collectstatic`, which should always be run before
+# any DEBUG=False deploy.
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": (
-            "whitenoise.storage.CompressedManifestStaticFilesStorage"
-            if not DEBUG else
-            "django.contrib.staticfiles.storage.StaticFilesStorage"
-        ),
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
 
