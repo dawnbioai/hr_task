@@ -1,0 +1,67 @@
+{% extends "crm/base_crm.html" %}
+{% block page_title %}Leads Analytics — DOB Campus CRM{% endblock %}
+{% block topbar_title %}Leads Analytics{% endblock %}
+
+{% block crm_content %}
+<div class="ana-stats">
+  <div class="stat-card total"><div class="stat-label">Total Leads</div><div class="stat-value c-teal" id="ana-total">0</div><div class="stat-sub">All time</div></div>
+  <div class="stat-card hot"><div class="stat-label">Hot Rate</div><div class="stat-value c-hot" id="ana-hot-rate">0%</div><div class="stat-sub">Of total leads</div></div>
+  <div class="stat-card warm"><div class="stat-label">Warm Rate</div><div class="stat-value c-warm" id="ana-warm-rate">0%</div><div class="stat-sub">Of total leads</div></div>
+  <div class="stat-card enrolled"><div class="stat-label">Universities</div><div class="stat-value c-enrolled" id="ana-unis">0</div><div class="stat-sub">Covered so far</div></div>
+</div>
+
+<div class="grid-2">
+  <!-- Monthly bar -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">Lead Growth — Last 11 Months</div></div>
+    <div class="card-body">
+      <div style="display:flex; align-items:flex-end; gap:4px; height:90px; margin-bottom:8px;" id="growth-bars"></div>
+      <div style="font-size:10px; color:var(--muted); text-align:center;">This month — <span style="color:var(--teal); font-weight:600;" id="ana-this-month">0 leads</span> added</div>
+    </div>
+  </div>
+
+  <!-- Source breakdown -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">Leads by Source</div></div>
+    <div class="card-body">
+      <div class="source-list" id="source-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- Status distribution -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">Status Distribution</div></div>
+    <div class="card-body">
+      <div style="display:flex; gap:16px; align-items:center; margin-bottom:14px;">
+        <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+          <div style="display:flex; justify-content:space-between; font-size:11.5px;"><span style="color:var(--hot);">🔥 Hot</span><span id="dist-hot-pct" style="font-weight:600;">0%</span></div>
+          <div style="background:rgba(255,255,255,.05); border-radius:3px; height:6px; overflow:hidden;"><div id="dist-hot-bar" style="height:100%; border-radius:3px; background:var(--hot); width:0%; transition:width .6s;"></div></div>
+          <div style="display:flex; justify-content:space-between; font-size:11.5px;"><span style="color:var(--warm);">⚡ Warm</span><span id="dist-warm-pct" style="font-weight:600;">0%</span></div>
+          <div style="background:rgba(255,255,255,.05); border-radius:3px; height:6px; overflow:hidden;"><div id="dist-warm-bar" style="height:100%; border-radius:3px; background:var(--warm); width:0%; transition:width .6s;"></div></div>
+          <div style="display:flex; justify-content:space-between; font-size:11.5px;"><span style="color:var(--cold);">❄️ Cold</span><span id="dist-cold-pct" style="font-weight:600;">0%</span></div>
+          <div style="background:rgba(255,255,255,.05); border-radius:3px; height:6px; overflow:hidden;"><div id="dist-cold-bar" style="height:100%; border-radius:3px; background:var(--cold); width:0%; transition:width .6s;"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top universities -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">Top Universities</div></div>
+    <div class="card-body">
+      <div class="uni-chart" id="ana-uni-chart"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block crm_extra_js %}
+<script>
+(async function(){
+  await loadLeads();
+  renderAnalytics();
+})();
+</script>
+{% endblock %}

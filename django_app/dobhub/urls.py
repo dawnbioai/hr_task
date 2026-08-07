@@ -22,6 +22,7 @@ from django.contrib import admin
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('crm/', include('campus_crm.urls')),
     path('', include('hub.urls')),
 ]
 

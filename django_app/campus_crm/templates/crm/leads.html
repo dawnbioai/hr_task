@@ -1,0 +1,162 @@
+{% extends "crm/base_crm.html" %}
+{% block page_title %}All Leads — DOB Campus CRM{% endblock %}
+{% block topbar_title %}All Leads{% endblock %}
+
+{% block crm_content %}
+<!-- Stat cards -->
+<div class="stats-row">
+  <div class="stat-card total">
+    <div class="stat-icon">👥</div>
+    <div class="stat-label">Total Leads</div>
+    <div class="stat-value c-teal" id="sc-total">0</div>
+    <div class="stat-sub">All sources combined</div>
+  </div>
+  <div class="stat-card hot" onclick="filterByStatus('hot')">
+    <div class="stat-icon">🔥</div>
+    <div class="stat-label">Hot Leads</div>
+    <div class="stat-value c-hot" id="sc-hot">0</div>
+    <div class="stat-sub">Enrolled / Purchased service</div>
+  </div>
+  <div class="stat-card warm" onclick="filterByStatus('warm')">
+    <div class="stat-icon">⚡</div>
+    <div class="stat-label">Warm Leads</div>
+    <div class="stat-value c-warm" id="sc-warm">0</div>
+    <div class="stat-sub">Interested, not enrolled yet</div>
+  </div>
+  <div class="stat-card cold" onclick="filterByStatus('cold')">
+    <div class="stat-icon">❄️</div>
+    <div class="stat-label">Cold Leads</div>
+    <div class="stat-value c-cold" id="sc-cold">0</div>
+    <div class="stat-sub">No response / low interest</div>
+  </div>
+</div>
+
+<div class="grid-3-2">
+  <!-- University chart -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">University-wise Leads</div>
+      <div class="card-badge" id="uni-badge">— universities</div>
+    </div>
+    <div class="card-body">
+      <div class="uni-chart" id="uni-chart"></div>
+    </div>
+  </div>
+
+  <!-- Funnel + seminar -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">Lead Status Funnel</div></div>
+    <div class="card-body">
+      <div class="funnel">
+        <div class="funnel-item">
+          <div class="funnel-dot hot"></div>
+          <div class="funnel-txt"><div class="funnel-lbl">🔥 Hot</div><div class="funnel-desc">Enrolled in training / bought service</div></div>
+          <div class="funnel-num hot" id="fn-hot">0</div>
+        </div>
+        <div class="funnel-item">
+          <div class="funnel-dot warm"></div>
+          <div class="funnel-txt"><div class="funnel-lbl">⚡ Warm</div><div class="funnel-desc">Interested — follow-up needed</div></div>
+          <div class="funnel-num warm" id="fn-warm">0</div>
+        </div>
+        <div class="funnel-item">
+          <div class="funnel-dot cold"></div>
+          <div class="funnel-txt"><div class="funnel-lbl">❄️ Cold</div><div class="funnel-desc">No response / low interest</div></div>
+          <div class="funnel-num cold" id="fn-cold">0</div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--border); margin-top:14px; padding-top:14px;">
+        <div style="font-size:9.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:10px;">Seminar Coverage</div>
+        <div class="sem-grid">
+          <div class="sem-box"><div class="sem-num" id="sem-uni">0</div><div class="sem-lbl">Universities</div></div>
+          <div class="sem-box"><div class="sem-num" id="sem-src">0</div><div class="sem-lbl">Sources / Events</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <input class="search-box" id="search-input" placeholder="🔍  Search name, email, phone..." oninput="applyFilters()">
+
+    <div class="ms-wrap" id="ms-uni">
+      <div class="ms-trigger" onclick="toggleMs('ms-uni')">
+        <span id="ms-uni-label">All Universities</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="ms-dropdown" id="ms-uni-drop"></div>
+    </div>
+
+    <div class="ms-wrap" id="ms-src">
+      <div class="ms-trigger" onclick="toggleMs('ms-src')">
+        <span id="ms-src-label">All Sources</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="ms-dropdown" id="ms-src-drop"></div>
+    </div>
+
+    <select class="form-input" id="filter-status" onchange="applyFilters()" style="font-size:11.5px; padding:7px 11px; cursor:pointer;">
+      <option value="">All Status</option>
+      <option value="hot">🔥 Hot</option>
+      <option value="warm">⚡ Warm</option>
+      <option value="cold">❄️ Cold</option>
+    </select>
+
+    <select class="form-input" id="filter-dept" onchange="applyFilters()" style="font-size:11.5px; padding:7px 11px; cursor:pointer;">
+      <option value="">All Departments</option>
+    </select>
+
+    <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export</button>
+  </div>
+
+  <!-- Email copy bar -->
+  <div class="email-copy-bar" id="email-copy-bar">
+    <span class="ecb-count" id="ecb-count">0 selected</span>
+    <span class="ecb-preview" id="ecb-preview"></span>
+    <button class="ecb-btn" onclick="copyEmails()">📋 Copy All Emails</button>
+    <span class="ecb-clear" onclick="clearEmailSel()">✕ Clear</span>
+  </div>
+
+  <!-- Select-all row -->
+  <div class="sel-all-row" id="sel-all-row">
+    <div class="sel-all-cb" id="sel-all-cb" onclick="toggleSelectAll()"></div>
+    <div class="sel-all-lbl" id="sel-all-lbl">Select all emails on this page</div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th class="email-th" onclick="toggleEmailMode()" title="Click to enable email selection mode">
+            Email <span style="font-size:8px; color:var(--teal); margin-left:3px;" id="email-mode-hint">☐ select</span>
+          </th>
+          <th>Phone</th>
+          <th>University</th>
+          <th>Department</th>
+          <th>Year</th>
+          <th>Source</th>
+          <th>Status</th>
+          <th>Change</th>
+        </tr>
+      </thead>
+      <tbody id="leads-tbody"></tbody>
+    </table>
+  </div>
+  <div style="padding:10px 18px; font-size:11px; color:var(--muted); border-top:1px solid var(--border);" id="leads-count-label">— leads</div>
+</div>
+{% endblock %}
+
+{% block crm_extra_js %}
+<script>
+(async function(){
+  await loadLeads();
+  renderDashboard();
+  buildMultiSelects();
+  renderLeads();
+})();
+</script>
+{% endblock %}

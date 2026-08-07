@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'tailwind',
     'theme',
     'hub',
+    'campus_crm',
 ]
 
 MIDDLEWARE = [

@@ -17,6 +17,9 @@ NAV_GROUPS = [
     {"label": "Collaboration", "items": [
         {"url": "meetings_list", "title": "Meetings", "icon": "🗓️"},
     ]},
+    {"label": "Tools", "items": [
+        {"url": "crm_leads", "title": "Campus CRM", "icon": "🎓"},
+    ]},
 ]
 
 

@@ -1,0 +1,175 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block page_title %}DOB Campus CRM{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'crm/crm.css' %}">
+</head>
+<body class="crm-root">
+{% csrf_token %}
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">DOB Campus CRM</div>
+    <div class="sub">Communication &amp; Relationship Management</div>
+  </div>
+  <div class="nav-sec">Main</div>
+  <a class="nav-item {% if request.resolver_match.url_name == 'crm_leads' %}active{% endif %}" href="{% url 'crm_leads' %}"><span class="icon">👥</span> All Leads</a>
+  <div class="nav-sec">Data</div>
+  <a class="nav-item {% if request.resolver_match.url_name == 'crm_analytics' %}active{% endif %}" href="{% url 'crm_analytics' %}"><span class="icon">📈</span> Leads Analytics</a>
+  <div class="nav-sec">System</div>
+  <a class="nav-item {% if request.resolver_match.url_name == 'crm_settings' %}active{% endif %}" href="{% url 'crm_settings' %}"><span class="icon">⚙️</span> Settings</a>
+  <a class="nav-item" href="{% url 'directory' %}"><span class="icon">↩</span> Back to Team Hub</a>
+  <div class="sidebar-footer">
+    <strong>{{ user.get_full_name|default:user.username }}</strong>
+    Dawn of Bioinformatics Ltd.
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">{% block topbar_title %}{% endblock %}</div>
+    <div class="topbar-right">
+      <button class="btn btn-outline btn-sm" onclick="openAddLead()">+ Add Lead</button>
+      <button class="btn btn-teal btn-sm" onclick="openUploadModal()">⬆ Upload CSV</button>
+    </div>
+  </div>
+
+  <div class="page">
+    {% block crm_content %}{% endblock %}
+  </div>
+</div><!-- /main -->
+
+<!-- ADD LEAD MODAL -->
+<div class="modal-overlay" id="add-lead-modal" onclick="closeAddLead(event)">
+  <div class="modal">
+    <div class="modal-title">Add New Lead <span class="modal-close" onclick="closeAddLead(true)">×</span></div>
+    <div class="form-grid">
+      <div class="form-group full"><div class="form-label">Full Name</div><input class="form-input" id="al-name" placeholder="Student full name"></div>
+      <div class="form-group"><div class="form-label">Email</div><input class="form-input" id="al-email" placeholder="email@example.com"></div>
+      <div class="form-group"><div class="form-label">Phone</div><input class="form-input" id="al-phone" placeholder="01XXXXXXXXX"></div>
+      <div class="form-group"><div class="form-label">University</div><input class="form-input" id="al-uni" placeholder="e.g. BRACU, NSU, NSTU"></div>
+      <div class="form-group"><div class="form-label">Department</div><input class="form-input" id="al-dept" placeholder="e.g. Pharmacy"></div>
+      <div class="form-group"><div class="form-label">Studying Year</div>
+        <select class="form-input" id="al-year">
+          <option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option><option>Masters</option><option>PhD</option>
+        </select>
+      </div>
+      <div class="form-group"><div class="form-label">Source</div>
+        <select class="form-input" id="al-source">
+          <option>On Campus Seminar</option>
+          <option>Campus Co-ordinators</option>
+          <option>Workshop</option>
+          <option>Research Talk</option>
+          <option>Training Program</option>
+        </select>
+      </div>
+      <div class="form-group"><div class="form-label">Initial Status</div>
+        <select class="form-input" id="al-status">
+          <option value="cold">❄️ Cold</option>
+          <option value="warm">⚡ Warm</option>
+          <option value="hot">🔥 Hot</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:18px;">
+      <button class="btn btn-outline" onclick="closeAddLead(true)">Cancel</button>
+      <button class="btn btn-teal" onclick="submitAddLead()">Save Lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD LEADS MODAL -->
+<div class="modal-overlay" id="upload-modal" onclick="closeUploadModal(event)">
+  <div class="modal modal-lg">
+    <div class="modal-title">Upload Leads CSV <span class="modal-close" onclick="closeUploadModal(true)">×</span></div>
+
+    <div style="font-size:9.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin-bottom:9px;">How to import leads</div>
+    <div style="display:flex; align-items:center; gap:0; overflow-x:auto; padding:4px 0; margin-bottom:18px;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:7px; min-width:82px;">
+        <div style="width:38px; height:38px; background:var(--teal-soft); border:1.5px solid rgba(0,196,180,.3); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px;">📋</div>
+        <div style="font-size:9.5px; color:var(--muted); text-align:center; line-height:1.3;">Campus Seminar / Workshop</div>
+      </div>
+      <div style="font-size:13px; color:var(--teal); padding:0 4px; padding-bottom:16px; opacity:.5;">→</div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:7px; min-width:82px;">
+        <div style="width:38px; height:38px; background:var(--teal-soft); border:1.5px solid rgba(0,196,180,.3); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px;">📊</div>
+        <div style="font-size:9.5px; color:var(--muted); text-align:center; line-height:1.3;">Google Form → Sheet</div>
+      </div>
+      <div style="font-size:13px; color:var(--teal); padding:0 4px; padding-bottom:16px; opacity:.5;">→</div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:7px; min-width:82px;">
+        <div style="width:38px; height:38px; background:var(--teal-soft); border:1.5px solid rgba(0,196,180,.3); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px;">📥</div>
+        <div style="font-size:9.5px; color:var(--muted); text-align:center; line-height:1.3;">Download CSV</div>
+      </div>
+      <div style="font-size:13px; color:var(--teal); padding:0 4px; padding-bottom:16px; opacity:.5;">→</div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:7px; min-width:82px;">
+        <div style="width:38px; height:38px; background:var(--teal-soft); border:1.5px solid rgba(0,196,180,.3); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px;">⬆</div>
+        <div style="font-size:9.5px; color:var(--muted); text-align:center; line-height:1.3;">Upload here</div>
+      </div>
+      <div style="font-size:13px; color:var(--teal); padding:0 4px; padding-bottom:16px; opacity:.5;">→</div>
+      <div style="display:flex; flex-direction:column; align-items:center; gap:7px; min-width:82px;">
+        <div style="width:38px; height:38px; background:var(--teal-soft); border:1.5px solid rgba(0,196,180,.3); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px;">✅</div>
+        <div style="font-size:9.5px; color:var(--muted); text-align:center; line-height:1.3;">Leads added to CRM</div>
+      </div>
+    </div>
+
+    <div class="upload-zone" onclick="triggerFileSelect()">
+      <div class="upload-icon">📂</div>
+      <div class="upload-title">Click to upload CSV file</div>
+      <div class="upload-sub">From Google Form, manual entry, or any registration source</div>
+    </div>
+    <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleCsvFile(this)">
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <div>
+        <div style="font-size:9.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin-bottom:9px;">Required Columns</div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="font-size:11.5px; padding:6px 10px; background:var(--surface); border-radius:6px; border:1px solid var(--border); color:var(--muted);"><span style="color:var(--teal); font-weight:600;">Name</span> · Full name</div>
+          <div style="font-size:11.5px; padding:6px 10px; background:var(--surface); border-radius:6px; border:1px solid var(--border); color:var(--muted);"><span style="color:var(--teal); font-weight:600;">Email</span> · Student email</div>
+          <div style="font-size:11.5px; padding:6px 10px; background:var(--surface); border-radius:6px; border:1px solid var(--border); color:var(--muted);"><span style="color:var(--teal); font-weight:600;">Phone</span> · Mobile number</div>
+          <div style="font-size:11.5px; padding:6px 10px; background:var(--surface); border-radius:6px; border:1px solid var(--border); color:var(--muted);"><span style="color:var(--teal); font-weight:600;">University</span> · Institution</div>
+          <div style="font-size:11.5px; padding:6px 10px; background:var(--surface); border-radius:6px; border:1px solid var(--border); color:var(--muted);"><span style="color:var(--teal); font-weight:600;">Department</span> · Dept / Subject</div>
+          <div style="font-size:11.5px; padding:6px 10px; background:var(--surface); border-radius:6px; border:1px solid var(--border); color:var(--muted);"><span style="color:var(--teal); font-weight:600;">Year</span> · Studying year</div>
+          <div style="font-size:11.5px; padding:6px 10px; background:var(--surface); border-radius:6px; border:1px solid var(--border); color:var(--muted);"><span style="color:var(--teal); font-weight:600;">Source</span> · Event / seminar type</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:9.5px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin-bottom:9px;">Lead Sources</div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="font-size:11.5px; padding:6px 10px; background:var(--surface); border-radius:6px; border:1px solid var(--border);">📍 On Campus Seminar</div>
+          <div style="font-size:11.5px; padding:6px 10px; background:var(--surface); border-radius:6px; border:1px solid var(--border);">🎓 Campus Co-ordinators</div>
+          <div style="font-size:11.5px; padding:6px 10px; background:var(--surface); border-radius:6px; border:1px solid var(--border);">🛠 Workshop</div>
+          <div style="font-size:11.5px; padding:6px 10px; background:var(--surface); border-radius:6px; border:1px solid var(--border);">🔬 Research Talk</div>
+          <div style="font-size:11.5px; padding:6px 10px; background:var(--surface); border-radius:6px; border:1px solid var(--border);">📚 Training Program</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS CHANGE MODAL -->
+<div class="status-modal" id="status-modal" onclick="closeStatusModal(event)">
+  <div class="status-box">
+    <div class="status-box-title">Change status for <span id="sm-name" style="color:var(--teal);">—</span></div>
+    <div class="status-options">
+      <div class="status-opt s-hot"      onclick="pickStatus('hot')"     id="so-hot">🔥 Hot</div>
+      <div class="status-opt s-warm"     onclick="pickStatus('warm')"    id="so-warm">⚡ Warm</div>
+      <div class="status-opt s-cold"     onclick="pickStatus('cold')"    id="so-cold">❄️ Cold</div>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="btn btn-outline btn-sm" style="flex:1;" onclick="closeStatusModal(true)">Cancel</button>
+      <button class="btn btn-teal btn-sm" style="flex:1;" onclick="applyStatus()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="{% static 'crm/crm.js' %}"></script>
+{% block crm_extra_js %}{% endblock %}
+</body>
+</html>
