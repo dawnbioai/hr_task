@@ -15,14 +15,25 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
 from django.urls import include, path
+from django.views.static import serve as serve_static
+
+from django.contrib import admin
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('hub.urls')),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve uploaded documents/CVs unconditionally (not just when DEBUG=True).
+# This is a small internal tool on shared hosting with no separate media
+# server/CDN, so Django serving MEDIA directly is the pragmatic choice here
+# — Django's own docs flag this as unsuitable for high-traffic production,
+# which doesn't apply to this app's scale.
+urlpatterns += [
+    path(
+        f"{settings.MEDIA_URL.lstrip('/')}<path:path>",
+        serve_static,
+        {"document_root": settings.MEDIA_ROOT},
+    ),
+]

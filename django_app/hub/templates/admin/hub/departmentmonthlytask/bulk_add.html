@@ -24,19 +24,15 @@
       </div>
       <div class="form-row">
         <div>
-          <label for="id_month">Month:</label>
-          <input type="month" name="month" id="id_month" required>
-        </div>
-      </div>
-      <div class="form-row">
-        <div>
           <label for="id_tasks">Tasks (one per line):</label>
           <textarea name="tasks" id="id_tasks" rows="10" cols="90"
                     placeholder="Process monthly payroll &amp; bKash disbursement | 5&#10;Update employee attendance &amp; leave log | 3&#10;Track contract renewals due this month | 10"></textarea>
           <p class="help">
-            Format each line as <code>Task description | day-of-month</code> (e.g. <code>Submit report | 28</code>).
-            The day is when it's due that month. If you leave off the "| day" part, the last day of the month is used.
-            Re-running this for the same department/month/task text updates the existing row instead of duplicating it.
+            Format each line as <code>Task description | day-of-month</code> (e.g. <code>Submit report | 28</code>) —
+            this is a permanent, recurring checklist item, set up once. It is NOT tied to a specific month; every
+            month it's simply due again on that day, and staff check it off on the to-do page. If you leave off the
+            "| day" part, day 28 is used. Re-running this for the same department/task text updates the due day
+            instead of duplicating the row.
           </p>
         </div>
       </div>

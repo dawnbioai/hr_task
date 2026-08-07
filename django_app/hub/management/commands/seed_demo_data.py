@@ -16,7 +16,7 @@ from hub.models import (
 
 DIVISIONS = [
     "General", "Central Operation Division", "Growth Division",
-    "DBS", "IBAI", "BSDS", "DiLab",
+    "DBS", "IBAI", "DiLab", "BSDS",
 ]
 
 DEPARTMENT_DIVISION_MAP = {
@@ -316,8 +316,8 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("Cleared existing hub data."))
 
         divisions = {}
-        for name in DIVISIONS:
-            div, _ = Division.objects.get_or_create(name=name)
+        for index, name in enumerate(DIVISIONS):
+            div, _ = Division.objects.update_or_create(name=name, defaults={"order": index})
             divisions[name] = div
 
         departments = {}

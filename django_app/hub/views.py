@@ -20,7 +20,7 @@ from .models import (
     RecruitmentRound,
     Task,
 )
-from .monthly_tasks import PRIORITY_DEPARTMENTS, ensure_monthly_tasks, ordered_departments
+from .monthly_tasks import PRIORITY_DEPARTMENTS, ordered_departments
 
 
 def home(request):
@@ -61,7 +61,7 @@ def directory(request):
             Q(name__icontains=q) | Q(role__icontains=q)
             | Q(department__name__icontains=q) | Q(division__name__icontains=q)
         )
-    employees = employees.order_by("division__name", "department__name", "name")
+    employees = employees.order_by("division__order", "department__name", "name")
 
     divisions = {}
     for emp in employees:
@@ -277,7 +277,7 @@ def analysis(request):
     division_id = request.GET.get("division", "all")
     month = request.GET.get("month", "all")
     months = _completed_months()
-    divisions = Division.objects.filter(employees__isnull=False).distinct().order_by("name")
+    divisions = Division.objects.filter(employees__isnull=False).distinct().order_by("order", "name")
 
     employees = Employee.objects.filter(is_active=True).order_by("name")
     if division_id != "all":
@@ -345,7 +345,7 @@ def meetings_list(request):
     abs_rows = sorted(absence_counts.items(), key=lambda kv: -kv[1])
 
     months = sorted({m.date.strftime("%Y-%m") for m in all_meetings}, reverse=True)
-    departments = Department.objects.order_by("name")
+    departments = Department.objects.order_by("division__order", "name")
 
     month = request.GET.get("month", "all")
     department_id = request.GET.get("department", "all")
@@ -367,7 +367,7 @@ def meetings_list(request):
         "div_rows": div_rows, "abs_rows": abs_rows,
         "months": months, "departments": departments,
         "selected_month": month, "selected_department": department_id,
-        "all_divisions": Division.objects.order_by("name"),
+        "all_divisions": Division.objects.order_by("order", "name"),
         "all_employees": Employee.objects.filter(is_active=True).order_by("name"),
     })
 
@@ -390,40 +390,23 @@ def meeting_create(request):
     return redirect("meetings_list")
 
 
-def _month_range_options(back=5, forward=1):
-    center = date.today().replace(day=1)
-    months = [(center + relativedelta(months=i)).strftime("%Y-%m") for i in range(-back, forward + 1)]
-    return sorted(set(months), reverse=True)
-
-
 @login_required
 def department_monthly_todo(request):
-    month_str = request.GET.get("month", date.today().strftime("%Y-%m"))
-    try:
-        year, mon = map(int, month_str.split("-"))
-        month_date = date(year, mon, 1)
-    except (ValueError, TypeError):
-        month_date = date.today().replace(day=1)
-        month_str = month_date.strftime("%Y-%m")
-
-    ensure_monthly_tasks(month_date)
-
-    months = _month_range_options()
-    if month_str not in months:
-        months.insert(0, month_str)
-        months.sort(reverse=True)
+    today = date.today()
 
     groups = []
-    for dept in ordered_departments(Department.objects.all()):
-        tasks = DepartmentMonthlyTask.objects.filter(department=dept, month=month_date).order_by("due_date")
+    for dept in ordered_departments(Department.objects.select_related("division")):
+        rows = [
+            {"task": t, "due_date": t.due_date_for(today), "complete": t.is_complete_for(today)}
+            for t in dept.monthly_tasks.order_by("due_day", "task")
+        ]
         groups.append({
-            "department": dept, "tasks": tasks,
+            "department": dept, "rows": rows,
             "priority": dept.name in PRIORITY_DEPARTMENTS,
         })
 
     return render(request, "hub/department_monthly_todo.html", {
-        "groups": groups, "months": months, "selected_month": month_str,
-        "month_label": month_date.strftime("%B %Y"),
+        "groups": groups, "month_label": today.strftime("%B %Y"),
     })
 
 
@@ -434,8 +417,11 @@ def department_monthly_todo_update(request, pk):
         raise Http404
     item = get_object_or_404(DepartmentMonthlyTask, pk=pk)
     status = request.POST.get("status")
-    if status in DepartmentMonthlyTask.Status.values:
-        item.status = status
+    if status == "complete":
+        item.last_completed_month = date.today().replace(day=1)
+        item.save()
+    elif status == "due":
+        item.last_completed_month = None
         item.save()
     next_url = request.POST.get("next") or "department_monthly_todo"
     return redirect(next_url)
@@ -481,7 +467,7 @@ def documentation(request):
          "docs": Document.objects.filter(category=key).select_related("department")}
         for key, label in Document.Category.choices
     ]
-    departments = Department.objects.order_by("name")
+    departments = Department.objects.order_by("division__order", "name")
     return render(request, "hub/documentation.html", {
         "groups": groups, "categories": Document.Category.choices, "departments": departments,
     })

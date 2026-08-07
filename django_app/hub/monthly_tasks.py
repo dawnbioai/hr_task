@@ -1,5 +1,3 @@
-import calendar
-
 PRIORITY_DEPARTMENTS = ["HR Dept.", "Finance Dept."]
 
 TEMPLATES = {
@@ -48,17 +46,19 @@ def get_template(department_name):
     return TEMPLATES.get(department_name, DEFAULT_TEMPLATE)
 
 
-def ensure_monthly_tasks(month_date):
-    """Idempotently create this month's checklist rows for every department."""
+def seed_default_tasks():
+    """One-time setup: create each department's permanent recurring checklist.
+
+    Idempotent (department, task) upsert — safe to call more than once.
+    Nothing here is month-specific; there's no per-month regeneration.
+    """
     from .models import Department, DepartmentMonthlyTask
 
-    last_day = calendar.monthrange(month_date.year, month_date.month)[1]
     for dept in Department.objects.all():
         for task_desc, day in get_template(dept.name):
-            due_date = month_date.replace(day=min(day, last_day))
             DepartmentMonthlyTask.objects.get_or_create(
-                department=dept, month=month_date, task=task_desc,
-                defaults={"due_date": due_date},
+                department=dept, task=task_desc,
+                defaults={"due_day": day},
             )
 
 
@@ -66,6 +66,6 @@ def ordered_departments(queryset):
     def sort_key(d):
         if d.name in PRIORITY_DEPARTMENTS:
             return (0, PRIORITY_DEPARTMENTS.index(d.name), "")
-        return (1, 0, d.name)
+        return (1, d.division.order, d.name)
 
     return sorted(queryset, key=sort_key)

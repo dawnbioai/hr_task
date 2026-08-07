@@ -1,4 +1,3 @@
-import calendar
 import csv
 import io
 from datetime import date
@@ -48,7 +47,8 @@ admin.site.get_app_list = _ordered_get_app_list.__get__(admin.site)
 
 @admin.register(Division)
 class DivisionAdmin(admin.ModelAdmin):
-    list_display = ("name", "department_count", "employee_count")
+    list_display = ("name", "order", "department_count", "employee_count")
+    list_editable = ("order",)
     search_fields = ("name",)
 
     def department_count(self, obj):
@@ -238,17 +238,16 @@ class DocumentAdmin(admin.ModelAdmin):
 
 @admin.register(DepartmentMonthlyTask)
 class DepartmentMonthlyTaskAdmin(admin.ModelAdmin):
-    list_display = ("department", "month", "task", "due_date", "status")
-    list_filter = ("status", "month", "department__division")
+    list_display = ("department", "task", "due_day", "is_complete_this_month")
+    list_filter = ("department__division",)
     search_fields = ("task", "department__name")
     autocomplete_fields = ("department",)
-    date_hierarchy = "due_date"
-    fields = ("department", "task", "due_date", "status")
+    fields = ("department", "task", "due_day")
     change_list_template = "admin/hub/departmentmonthlytask/change_list.html"
 
-    def save_model(self, request, obj, form, change):
-        obj.month = obj.due_date.replace(day=1)
-        super().save_model(request, obj, form, change)
+    @admin.display(boolean=True, description="Done this month")
+    def is_complete_this_month(self, obj):
+        return obj.is_complete_for(date.today())
 
     def get_urls(self):
         custom = [
@@ -261,17 +260,13 @@ class DepartmentMonthlyTaskAdmin(admin.ModelAdmin):
         return custom + super().get_urls()
 
     def bulk_add_view(self, request):
-        departments = Department.objects.order_by("name")
+        departments = Department.objects.order_by("division__order", "name")
 
         if request.method == "POST":
             dept = Department.objects.filter(pk=request.POST.get("department")).first()
-            month_str = request.POST.get("month", "")
             lines = (request.POST.get("tasks") or "").splitlines()
 
-            if dept and month_str:
-                year, mon = map(int, month_str.split("-"))
-                month_date = date(year, mon, 1)
-                last_day = calendar.monthrange(year, mon)[1]
+            if dept:
                 created = 0
                 for line in lines:
                     line = line.strip()
@@ -281,23 +276,22 @@ class DepartmentMonthlyTaskAdmin(admin.ModelAdmin):
                         task_text, day_text = line.rsplit("|", 1)
                         task_text = task_text.strip()
                         try:
-                            day = int(day_text.strip())
+                            day = max(1, min(31, int(day_text.strip())))
                         except ValueError:
-                            day = last_day
+                            day = 28
                     else:
-                        task_text, day = line, last_day
-                    day = max(1, min(day, last_day))
+                        task_text, day = line, 28
                     DepartmentMonthlyTask.objects.update_or_create(
-                        department=dept, month=month_date, task=task_text,
-                        defaults={"due_date": date(year, mon, day)},
+                        department=dept, task=task_text,
+                        defaults={"due_day": day},
                     )
                     created += 1
                 if created:
-                    self.message_user(request, f"Added {created} task(s) for {dept.name} — {month_str}.")
+                    self.message_user(request, f"Added/updated {created} task(s) for {dept.name}.")
                     return redirect("admin:hub_departmentmonthlytask_changelist")
                 self.message_user(request, "Enter at least one task line.", level=messages.ERROR)
             else:
-                self.message_user(request, "Choose a department and a month.", level=messages.ERROR)
+                self.message_user(request, "Choose a department.", level=messages.ERROR)
 
         context = dict(
             self.admin_site.each_context(request),

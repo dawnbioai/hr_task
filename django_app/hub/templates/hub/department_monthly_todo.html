@@ -1,17 +1,9 @@
 {% extends "base.html" %}
 {% block page_title %}Department Monthly To-do List — DOB Team Hub{% endblock %}
 {% block page_heading %}Department Monthly To-do List{% endblock %}
-{% block page_subtitle %}End-of-month checklist per department · {{ month_label }}{% endblock %}
+{% block page_subtitle %}Recurring monthly checklist per department · {{ month_label }}{% endblock %}
 
 {% block content %}
-<form method="get" class="mb-6">
-    <select name="month" onchange="this.form.submit()" class="text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
-        {% for m in months %}
-        <option value="{{ m }}" {% if selected_month == m %}selected{% endif %}>{{ m }}</option>
-        {% endfor %}
-    </select>
-</form>
-
 <div class="grid gap-4 grid-cols-1 md:grid-cols-2">
     {% for group in groups %}
     <div class="bg-white border rounded-xl shadow-sm p-4.5 {% if group.priority %}border-[#00C4B4]{% else %}border-[#E7ECF1]{% endif %}">
@@ -28,32 +20,32 @@
                 </tr>
             </thead>
             <tbody>
-            {% for t in group.tasks %}
+            {% for row in group.rows %}
                 <tr class="border-b border-[#F0F3F6] last:border-0">
-                    <td class="py-2 pr-2">{{ t.task }}</td>
-                    <td class="py-2 pr-2 text-[#5B6B82] whitespace-nowrap">{{ t.due_date|date:"d M" }}</td>
+                    <td class="py-2 pr-2">{{ row.task.task }}</td>
+                    <td class="py-2 pr-2 text-[#5B6B82] whitespace-nowrap">{{ row.due_date|date:"d M" }}</td>
                     <td class="py-2">
                         {% if user.is_staff %}
-                        <form method="post" action="{% url 'department_monthly_todo_update' t.pk %}">
+                        <form method="post" action="{% url 'department_monthly_todo_update' row.task.pk %}">
                             {% csrf_token %}
                             <input type="hidden" name="next" value="{{ request.get_full_path }}">
                             <select name="status" onchange="this.form.submit()"
                                     class="text-[11.5px] font-semibold px-2 py-1 rounded-full border-0 cursor-pointer
-                                    {% if t.status == 'complete' %}bg-[#E3FBF8] text-[#046B62]{% else %}bg-[#FDF1DF] text-[#946318]{% endif %}">
-                                <option value="due" {% if t.status == "due" %}selected{% endif %}>Due</option>
-                                <option value="complete" {% if t.status == "complete" %}selected{% endif %}>Complete</option>
+                                    {% if row.complete %}bg-[#E3FBF8] text-[#046B62]{% else %}bg-[#FDF1DF] text-[#946318]{% endif %}">
+                                <option value="due" {% if not row.complete %}selected{% endif %}>Due</option>
+                                <option value="complete" {% if row.complete %}selected{% endif %}>Complete</option>
                             </select>
                         </form>
                         {% else %}
                         <span class="text-[11.5px] font-semibold px-2.5 py-1 rounded-full
-                            {% if t.status == 'complete' %}bg-[#E3FBF8] text-[#046B62]{% else %}bg-[#FDF1DF] text-[#946318]{% endif %}">
-                            {{ t.get_status_display }}
+                            {% if row.complete %}bg-[#E3FBF8] text-[#046B62]{% else %}bg-[#FDF1DF] text-[#946318]{% endif %}">
+                            {% if row.complete %}Complete{% else %}Due{% endif %}
                         </span>
                         {% endif %}
                     </td>
                 </tr>
             {% empty %}
-                <tr><td class="py-3 text-[#5B6B82]" colspan="3">No checklist items.</td></tr>
+                <tr><td class="py-3 text-[#5B6B82]" colspan="3">No checklist items yet.</td></tr>
             {% endfor %}
             </tbody>
         </table>

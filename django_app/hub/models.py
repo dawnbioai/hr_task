@@ -5,9 +5,12 @@ from django.utils.text import slugify
 
 class Division(models.Model):
     name = models.CharField(max_length=120, unique=True)
+    order = models.PositiveSmallIntegerField(
+        default=0, help_text="Controls display order everywhere (lower = first)."
+    )
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["order", "name"]
 
     def __str__(self):
         return self.name
@@ -18,7 +21,7 @@ class Department(models.Model):
     division = models.ForeignKey(Division, on_delete=models.PROTECT, related_name="departments")
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["division__order", "name"]
 
     def __str__(self):
         return self.name
@@ -142,7 +145,7 @@ class Opening(models.Model):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.OPEN)
 
     class Meta:
-        ordering = ["department__name"]
+        ordering = ["department__division__order", "department__name"]
 
     def __str__(self):
         return f"{self.department.name} ({self.positions})"
@@ -215,19 +218,38 @@ class Document(models.Model):
 
 
 class DepartmentMonthlyTask(models.Model):
-    class Status(models.TextChoices):
-        DUE = "due", "Due"
-        COMPLETE = "complete", "Complete"
+    """A recurring monthly obligation for a department.
+
+    Set up once (department + task text + which day of the month it's due).
+    Nothing regenerates every month — `last_completed_month` just tracks
+    whether *this* calendar month's occurrence has been checked off yet;
+    it naturally reads as "Due" again as soon as the month rolls over.
+    """
 
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="monthly_tasks")
-    month = models.DateField(help_text="Stored as the 1st of the month")
     task = models.CharField(max_length=255)
-    due_date = models.DateField(help_text="Last date to complete this month's task")
-    status = models.CharField(max_length=10, choices=Status.choices, default=Status.DUE)
+    due_day = models.PositiveSmallIntegerField(
+        default=28, help_text="Day of the month this is due (1-31)."
+    )
+    last_completed_month = models.DateField(
+        null=True, blank=True,
+        help_text="Set automatically to the 1st of the month it was last marked Complete.",
+    )
 
     class Meta:
-        unique_together = ("department", "month", "task")
-        ordering = ["due_date"]
+        unique_together = ("department", "task")
+        ordering = ["due_day", "task"]
 
     def __str__(self):
-        return f"{self.department.name} — {self.task} ({self.month:%Y-%m})"
+        return f"{self.department.name} — {self.task}"
+
+    def due_date_for(self, today):
+        import calendar
+        last_day = calendar.monthrange(today.year, today.month)[1]
+        return today.replace(day=min(self.due_day, last_day))
+
+    def is_complete_for(self, today):
+        return bool(self.last_completed_month) and (
+            self.last_completed_month.year == today.year
+            and self.last_completed_month.month == today.month
+        )
