@@ -21,7 +21,6 @@
   <div class="nav-sec">Data</div>
   <a class="nav-item {% if request.resolver_match.url_name == 'crm_analytics' %}active{% endif %}" href="{% url 'crm_analytics' %}"><span class="icon">📈</span> Leads Analytics</a>
   <div class="nav-sec">System</div>
-  <a class="nav-item {% if request.resolver_match.url_name == 'crm_settings' %}active{% endif %}" href="{% url 'crm_settings' %}"><span class="icon">⚙️</span> Settings</a>
   <a class="nav-item" href="{% url 'directory' %}"><span class="icon">↩</span> Back to Team Hub</a>
   <div class="sidebar-footer">
     <strong>{{ user.get_full_name|default:user.username }}</strong>
@@ -34,6 +33,7 @@
   <div class="topbar">
     <div class="topbar-title">{% block topbar_title %}{% endblock %}</div>
     <div class="topbar-right">
+      <button class="btn btn-outline btn-sm" onclick="openAddDepartment()">+ Add Department</button>
       <button class="btn btn-outline btn-sm" onclick="openAddLead()">+ Add Lead</button>
       <button class="btn btn-teal btn-sm" onclick="openUploadModal()">⬆ Upload CSV</button>
     </div>
@@ -43,6 +43,18 @@
     {% block crm_content %}{% endblock %}
   </div>
 </div><!-- /main -->
+
+<!-- ADD DEPARTMENT MODAL -->
+<div class="modal-overlay" id="add-dept-modal" onclick="closeAddDepartment(event)">
+  <div class="modal" style="width:380px;">
+    <div class="modal-title">Add New Department <span class="modal-close" onclick="closeAddDepartment(true)">×</span></div>
+    <div class="form-group full"><div class="form-label">Department Name</div><input class="form-input" id="ad-name" placeholder="e.g. Computer Science"></div>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:18px;">
+      <button class="btn btn-outline" onclick="closeAddDepartment(true)">Cancel</button>
+      <button class="btn btn-teal" onclick="submitAddDepartment()">Save Department</button>
+    </div>
+  </div>
+</div>
 
 <!-- ADD LEAD MODAL -->
 <div class="modal-overlay" id="add-lead-modal" onclick="closeAddLead(event)">

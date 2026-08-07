@@ -7,7 +7,7 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
 
-from .models import Lead
+from .models import Department, Lead
 
 REQUIRED_CSV_COLUMNS = ["name", "email", "phone", "university", "department", "year", "source"]
 
@@ -23,8 +23,26 @@ def analytics_page(request):
 
 
 @login_required
-def settings_page(request):
-    return render(request, "crm/settings.html")
+def api_department_list_create(request):
+    if request.method == "GET":
+        return JsonResponse({"departments": list(Department.objects.values_list("name", flat=True))})
+
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+        except (ValueError, TypeError):
+            return HttpResponseBadRequest("Invalid JSON body")
+
+        name = (data.get("name") or "").strip()
+        if not name:
+            return JsonResponse({"error": "Department name is required."}, status=400)
+
+        dept, created = Department.objects.get_or_create(name=name)
+        if not created:
+            return JsonResponse({"error": f'"{name}" already exists.'}, status=400)
+        return JsonResponse({"department": dept.name}, status=201)
+
+    return HttpResponseBadRequest("Unsupported method")
 
 
 @login_required

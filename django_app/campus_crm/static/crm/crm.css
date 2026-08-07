@@ -208,6 +208,15 @@
 .crm-root .form-input:focus { border-color:var(--teal); }
 .crm-root .form-input::placeholder { color:var(--muted); }
 
+/* Native <select> dropdown option lists are rendered by the browser, not
+   this stylesheet — most browsers ignore `background`/`color` on the closed
+   control but DO honor them on <option>, so set those explicitly or the
+   opened list falls back to a white background with (invisible) white text. */
+.crm-root select.form-input option {
+  background: var(--navy-mid);
+  color: var(--white);
+}
+
 /* STATUS CHANGE IN-ROW */
 .crm-root .status-modal { display:none; position:fixed; inset:0; background:rgba(10,22,40,.7); backdrop-filter:blur(3px); z-index:998; align-items:center; justify-content:center; }
 .crm-root .status-modal.show { display:flex; }

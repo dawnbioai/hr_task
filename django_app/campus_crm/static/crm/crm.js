@@ -7,6 +7,7 @@ const CSRF_TOKEN = getCookie('csrftoken');
 
 // ─── DATA ───────────────────────────────────────────────────────
 let leads = [];
+let departments = [];
 
 // ─── STATE ──────────────────────────────────────────────────────
 let filteredLeads = [...leads];
@@ -34,6 +35,36 @@ async function loadLeads(){
   const data = await res.json();
   leads = data.leads;
   filteredLeads = [...leads];
+}
+
+async function loadDepartments(){
+  const res = await fetch('/crm/api/departments/');
+  const data = await res.json();
+  departments = data.departments;
+}
+
+// ─── ADD DEPARTMENT MODAL ────────────────────────────────────────
+function openAddDepartment(){ document.getElementById('add-dept-modal').classList.add('show'); }
+function closeAddDepartment(force){
+  if(force===true||force.target===document.getElementById('add-dept-modal'))
+    document.getElementById('add-dept-modal').classList.remove('show');
+}
+async function submitAddDepartment(){
+  const nameInput = document.getElementById('ad-name');
+  const name = nameInput.value.trim();
+  if(!name){ showToast('⚠ Department name is required'); return; }
+  const res = await fetch('/crm/api/departments/', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN},
+    body: JSON.stringify({name}),
+  });
+  const data = await res.json();
+  if(!res.ok){ showToast('⚠ '+(data.error||'Could not add department')); return; }
+  departments.push(data.department);
+  nameInput.value = '';
+  closeAddDepartment(true);
+  showToast('✓ Department added!');
+  if(typeof buildMultiSelects === 'function' && document.getElementById('filter-dept')) buildMultiSelects();
 }
 
 // ─── DASHBOARD ──────────────────────────────────────────────────
@@ -75,8 +106,9 @@ function buildMultiSelects(){
   buildMs('ms-uni','ms-uni-drop','ms-uni-label', unis, msState.uni, 'All Universities');
   buildMs('ms-src','ms-src-drop','ms-src-label', SOURCES, msState.src, 'All Sources');
 
-  // Dept filter
-  const depts = [...new Set(leads.map(l=>l.department).filter(Boolean))].sort();
+  // Dept filter — registered departments plus any legacy free-text values
+  // already in use on existing leads, deduped.
+  const depts = [...new Set([...departments, ...leads.map(l=>l.department).filter(Boolean)])].sort();
   const dsel = document.getElementById('filter-dept');
   const cur = dsel.value;
   dsel.innerHTML = '<option value="">All Departments</option>' + depts.map(d=>`<option value="${d}" ${d===cur?'selected':''}>${d}</option>`).join('');
