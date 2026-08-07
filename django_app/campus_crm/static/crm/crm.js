@@ -382,8 +382,11 @@ async function handleCsvFile(input){
   renderDashboard();
   buildMultiSelects();
   applyFilters();
-  const skippedMsg = data.skipped ? ` (${data.skipped} skipped — missing name)` : '';
-  setTimeout(()=>showToast(`✓ ${data.created} new lead${data.created!==1?'s':''} imported successfully!${skippedMsg}`), 300);
+  const notes = [];
+  if(data.skipped) notes.push(`${data.skipped} skipped — missing name`);
+  if(data.duplicates) notes.push(`${data.duplicates} duplicate${data.duplicates!==1?'s':''} skipped — same Email + Source`);
+  const noteMsg = notes.length ? ` (${notes.join(', ')})` : '';
+  setTimeout(()=>showToast(`✓ ${data.created} new lead${data.created!==1?'s':''} imported successfully!${noteMsg}`), 300);
 }
 
 // ─── ANALYTICS ──────────────────────────────────────────────────

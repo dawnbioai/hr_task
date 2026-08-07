@@ -128,6 +128,8 @@ def api_lead_csv_upload(request):
 
     created = 0
     skipped = 0
+    duplicates = 0
+    seen_email_source = set()
     new_leads = []
     for row in rows[1:]:
         if not row or not any(cell.strip() for cell in row):
@@ -142,6 +144,19 @@ def api_lead_csv_upload(request):
             skipped += 1
             continue
 
+        email = cell("email")
+        source = cell("source")
+        # De-dupe within this file: same Email + Source appearing more than
+        # once almost always means an accidental double form submission —
+        # keep the first occurrence, drop the rest. Only applied when email
+        # is actually present, so blank-email rows never false-match.
+        if email:
+            dedup_key = (email.lower(), source.lower())
+            if dedup_key in seen_email_source:
+                duplicates += 1
+                continue
+            seen_email_source.add(dedup_key)
+
         status = Lead.Status.COLD
         if status_index is not None and status_index < len(row):
             candidate = row[status_index].strip().lower()
@@ -150,12 +165,12 @@ def api_lead_csv_upload(request):
 
         lead = Lead.objects.create(
             name=name,
-            email=cell("email"),
+            email=email,
             phone=cell("phone"),
             university=cell("university"),
             department=cell("department"),
             year=cell("year"),
-            source=cell("source"),
+            source=source,
             status=status,
         )
         new_leads.append(lead)
@@ -164,5 +179,6 @@ def api_lead_csv_upload(request):
     return JsonResponse({
         "created": created,
         "skipped": skipped,
+        "duplicates": duplicates,
         "leads": [lead.as_dict() for lead in new_leads],
     })
