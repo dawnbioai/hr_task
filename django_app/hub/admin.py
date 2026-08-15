@@ -1,9 +1,12 @@
 import csv
 import io
+import secrets
+import string
 from datetime import date
 
 from django import forms
 from django.contrib import admin, messages
+from django.contrib.auth import get_user_model
 from django.shortcuts import redirect, render
 from django.urls import path
 
@@ -78,13 +81,42 @@ class ContractInline(admin.StackedInline):
     extra = 0
 
 
+@admin.action(description="Create login credentials for selected employees")
+def create_login_credentials(modeladmin, request, queryset):
+    User = get_user_model()
+    for employee in queryset:
+        if employee.user_id:
+            modeladmin.message_user(
+                request, f"{employee.name} already has a login ({employee.user.username}) — skipped.",
+                level=messages.WARNING,
+            )
+            continue
+        username = employee.slug
+        password = "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(10))
+        user = User.objects.create_user(username=username, password=password, email=employee.email or "")
+        employee.user = user
+        employee.save(update_fields=["user"])
+        modeladmin.message_user(
+            request,
+            f'Created login for {employee.name}: username "{username}", password "{password}" '
+            f'— copy this now and hand it to them, it will not be shown again.',
+            level=messages.SUCCESS,
+        )
+
+
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
-    list_display = ("name", "role", "department", "division", "salary", "bkash", "is_active")
+    list_display = ("name", "role", "department", "division", "salary", "bkash", "has_login", "is_active")
     list_filter = ("division", "department", "is_active")
     search_fields = ("name", "role", "email", "phone", "bkash")
     prepopulated_fields = {"slug": ("name",)}
+    autocomplete_fields = ("user",)
     inlines = [ContractInline, TaskInline]
+    actions = [create_login_credentials]
+
+    @admin.display(boolean=True, description="Has login")
+    def has_login(self, obj):
+        return bool(obj.user_id)
 
 
 @admin.register(Task)

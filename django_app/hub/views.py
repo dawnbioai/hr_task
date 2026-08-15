@@ -52,6 +52,14 @@ def _filter_by_month(tasks, month):
 
 @login_required
 def directory(request):
+    # A logged-in employee (not staff/HR) lands straight on their own profile
+    # — that's where their task status actually lives — instead of browsing
+    # the whole company directory. Staff/admin keep the full directory.
+    if not request.user.is_staff:
+        profile = getattr(request.user, "employee_profile", None)
+        if profile is not None:
+            return redirect("employee_detail", slug=profile.slug)
+
     q = request.GET.get("q", "").strip()
     today = date.today()
 
@@ -279,9 +287,17 @@ def analysis(request):
     months = _completed_months()
     divisions = Division.objects.filter(employees__isnull=False).distinct().order_by("order", "name")
 
-    employees = Employee.objects.filter(is_active=True).order_by("name")
-    if division_id != "all":
-        employees = employees.filter(division_id=division_id)
+    # Non-staff employees only ever see their own row — everyone else
+    # (staff/HR) keeps the full company-wide table with all filters.
+    own_profile = None if request.user.is_staff else getattr(request.user, "employee_profile", None)
+
+    if own_profile is not None:
+        employees = Employee.objects.filter(pk=own_profile.pk)
+        division_id = "all"
+    else:
+        employees = Employee.objects.filter(is_active=True).order_by("name")
+        if division_id != "all":
+            employees = employees.filter(division_id=division_id)
 
     rows = []
     for emp in employees:
@@ -310,6 +326,7 @@ def analysis(request):
     return render(request, "hub/analysis.html", {
         "rows": rows, "divisions": divisions, "selected_division": division_id,
         "months": months, "selected_month": month,
+        "is_personal": own_profile is not None,
         "stats": {
             "completed_total": completed_total, "regular_count": regular_count,
             "irregular_count": len(rows) - regular_count, "overdue_total": overdue_total,

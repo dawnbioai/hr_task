@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils.text import slugify
@@ -28,6 +29,11 @@ class Department(models.Model):
 
 
 class Employee(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="employee_profile",
+        help_text="Login account for this employee, if they have one. Lets them sign in and see their own task status.",
+    )
     slug = models.SlugField(max_length=60, unique=True, blank=True)
     name = models.CharField(max_length=150)
     role = models.CharField(max_length=150)

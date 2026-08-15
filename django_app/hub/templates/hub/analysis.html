@@ -2,7 +2,7 @@
 {% load hub_extras %}
 {% block page_title %}Analysis — DOB Team Hub{% endblock %}
 {% block page_heading %}Analysis{% endblock %}
-{% block page_subtitle %}Task completion performance per employee{% endblock %}
+{% block page_subtitle %}{% if is_personal %}Your task completion performance{% else %}Task completion performance per employee{% endif %}{% endblock %}
 
 {% block content %}
 <div class="grid gap-3.5 mb-6" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
@@ -25,19 +25,23 @@
 </div>
 
 <form method="get" class="flex items-center gap-3 mb-6 flex-wrap">
+    {% if not is_personal %}
     <select name="division" onchange="this.form.submit()" class="text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
         <option value="all" {% if selected_division == "all" %}selected{% endif %}>All divisions</option>
         {% for d in divisions %}
         <option value="{{ d.id }}" {% if selected_division == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
         {% endfor %}
     </select>
+    {% endif %}
     <select name="month" onchange="this.form.submit()" class="text-[13px] px-3 py-2.5 rounded-lg border border-[#E7ECF1] bg-white">
         <option value="all" {% if selected_month == "all" %}selected{% endif %}>All months</option>
         {% for m in months %}
         <option value="{{ m }}" {% if selected_month == m %}selected{% endif %}>{{ m }}</option>
         {% endfor %}
     </select>
+    {% if not is_personal %}
     <span class="text-[12.5px] text-[#5B6B82] ml-auto">{{ stats.employee_count }} employee{{ stats.employee_count|pluralize }}</span>
+    {% endif %}
 </form>
 
 <div class="bg-white border border-[#E7ECF1] rounded-xl shadow-sm overflow-hidden">
