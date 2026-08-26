@@ -23,5 +23,21 @@ NAV_GROUPS = [
 ]
 
 
+RESTRICTED_ALLOWED_URLS = {"directory", "analysis"}
+
+
 def nav(request):
-    return {"nav_groups": NAV_GROUPS}
+    user = getattr(request, "user", None)
+    is_restricted = bool(
+        user and user.is_authenticated and not user.is_staff
+        and getattr(user, "employee_profile", None)
+    )
+    if not is_restricted:
+        return {"nav_groups": NAV_GROUPS}
+
+    groups = []
+    for group in NAV_GROUPS:
+        items = [item for item in group["items"] if item["url"] in RESTRICTED_ALLOWED_URLS]
+        if items:
+            groups.append({"label": group["label"], "items": items})
+    return {"nav_groups": groups}
