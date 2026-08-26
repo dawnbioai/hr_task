@@ -104,10 +104,26 @@ def create_login_credentials(modeladmin, request, queryset):
         )
 
 
+class HasEmailFilter(admin.SimpleListFilter):
+    title = "email"
+    parameter_name = "has_email"
+
+    def lookups(self, request, model_admin):
+        return (("no", "Missing email"), ("yes", "Has email"))
+
+    def queryset(self, request, queryset):
+        if self.value() == "no":
+            return queryset.filter(email="")
+        if self.value() == "yes":
+            return queryset.exclude(email="")
+        return queryset
+
+
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
-    list_display = ("name", "role", "department", "division", "salary", "bkash", "has_login", "is_active")
-    list_filter = ("division", "department", "is_active")
+    list_display = ("name", "role", "department", "division", "email", "salary", "bkash", "has_login", "is_active")
+    list_editable = ("email",)
+    list_filter = ("division", "department", "is_active", HasEmailFilter)
     search_fields = ("name", "role", "email", "phone", "bkash")
     prepopulated_fields = {"slug": ("name",)}
     autocomplete_fields = ("user",)
